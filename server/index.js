@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const reportRoutes = require('./reports');
@@ -19,33 +20,36 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/report', reportRoutes);
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', function(req, res) {
   res.json({ status: 'ok', message: 'Someone is here.' });
 });
 
-// Active session counter endpoint
-let activeSessionCount = 0;
+var activeSessionCount = 0;
 
-app.get('/api/active', (req, res) => {
+app.get('/api/active', function(req, res) {
   res.json({ active: activeSessionCount });
 });
 
-const io = new Server(server, {
+// Serve React build in production
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+var io = new Server(server, {
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
     methods: ['GET', 'POST']
   }
 });
 
-// Rate limiting map
-const messageCooldown = new Map();
+var messageCooldown = new Map();
 
-io.on('connection', (socket) => {
+io.on('connection', function(socket) {
   console.log('[CONNECT] ' + socket.id);
 
-  socket.on('join-queue', ({ role, duration }) => {
-    if (!['seeker', 'listener'].includes(role)) return;
-    if (![15, 30].includes(duration)) return;
+  socket.on('join-queue', function(data) {
+    var role = data.role;
+    var duration = data.duration;
+    if (role !== 'seeker' && role !== 'listener') return;
+    if (duration !== 15 && duration !== 30) return;
 
     if (wasSessionEnded(socket.id)) {
       socket.emit('session-ended', {
@@ -58,21 +62,20 @@ io.on('connection', (socket) => {
     console.log('[QUEUE] ' + socket.id + ' joined as ' + role + ' for ' + duration + ' min');
     socket.emit('waiting', { message: 'Looking for someone...' });
 
-    const match = addToQueue(socket.id, role, duration);
+    var match = addToQueue(socket.id, role, duration);
     if (match) startMatch(match);
   });
 
-  socket.on('send-message', ({ text }) => {
-    const session = getSessionBySocket(socket.id);
+  socket.on('send-message', function(data) {
+    var session = getSessionBySocket(socket.id);
     if (!session) return;
 
-    // Rate limiting - 500ms minimum between messages
-    const now = Date.now();
-    const last = messageCooldown.get(socket.id) || 0;
+    var now = Date.now();
+    var last = messageCooldown.get(socket.id) || 0;
     if (now - last < 500) return;
     messageCooldown.set(socket.id, now);
 
-    const safeText = (text || '').trim().slice(0, 500);
+    var safeText = (data.text || '').trim().slice(0, 500);
     if (!safeText) return;
 
     io.to(session.roomId).emit('new-message', {
@@ -82,51 +85,49 @@ io.on('connection', (socket) => {
     });
   });
 
-  // Typing indicators
-  socket.on('typing', () => {
-    const session = getSessionBySocket(socket.id);
+  socket.on('typing', function() {
+    var session = getSessionBySocket(socket.id);
     if (!session) return;
-    const target = socket.id === session.seeker ? session.listener : session.seeker;
+    var target = socket.id === session.seeker ? session.listener : session.seeker;
     io.to(target).emit('user-typing');
   });
 
-  socket.on('stop-typing', () => {
-    const session = getSessionBySocket(socket.id);
+  socket.on('stop-typing', function() {
+    var session = getSessionBySocket(socket.id);
     if (!session) return;
-    const target = socket.id === session.seeker ? session.listener : session.seeker;
+    var target = socket.id === session.seeker ? session.listener : session.seeker;
     io.to(target).emit('user-stopped-typing');
   });
 
-  socket.on('step-away', () => {
-    const session = getSessionBySocket(socket.id);
+  socket.on('step-away', function() {
+    var session = getSessionBySocket(socket.id);
     if (!session) return;
     console.log('[STEP AWAY] ' + socket.id);
     handleSessionEnd(session, 'step-away');
   });
 
-  socket.on('leave-queue', () => {
+  socket.on('leave-queue', function() {
     removeFromQueue(socket.id);
   });
 
-  // Session feedback
-  socket.on('session-feedback', ({ rating }) => {
-    if (!['positive', 'neutral', 'negative'].includes(rating)) return;
-    console.log('[FEEDBACK] ' + socket.id + ' rated: ' + rating);
+  socket.on('session-feedback', function(data) {
+    if (data.rating !== 'positive' && data.rating !== 'neutral' && data.rating !== 'negative') return;
+    console.log('[FEEDBACK] ' + socket.id + ' rated: ' + data.rating);
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', function() {
     console.log('[DISCONNECT] ' + socket.id);
     removeFromQueue(socket.id);
     messageCooldown.delete(socket.id);
-    const session = getSessionBySocket(socket.id);
+    var session = getSessionBySocket(socket.id);
     if (session) handleSessionEnd(session, 'disconnect');
   });
 });
 
 function startMatch(match) {
-  const session = createSession(match.seeker, match.listener, match.duration);
-  const seekerSocket = io.sockets.sockets.get(match.seeker);
-  const listenerSocket = io.sockets.sockets.get(match.listener);
+  var session = createSession(match.seeker, match.listener, match.duration);
+  var seekerSocket = io.sockets.sockets.get(match.seeker);
+  var listenerSocket = io.sockets.sockets.get(match.listener);
 
   if (!seekerSocket || !listenerSocket) {
     endSession(session.roomId);
@@ -137,7 +138,6 @@ function startMatch(match) {
 
   seekerSocket.join(session.roomId);
   listenerSocket.join(session.roomId);
-
   activeSessionCount++;
 
   io.to(session.roomId).emit('matched', {
@@ -150,41 +150,43 @@ function startMatch(match) {
   console.log('[MATCH] ' + match.seeker + ' <-> ' + match.listener + ' for ' + match.duration + ' min');
   console.log('[ACTIVE SESSIONS] ' + activeSessionCount);
 
-  startSessionTimer(session.roomId, (endedSession) => {
+  startSessionTimer(session.roomId, function(endedSession) {
     console.log('[TIMER] Session ' + endedSession.roomId + ' ended');
     handleSessionEnd(endedSession, 'time-expired');
   });
 }
 
 function handleSessionEnd(session, reason) {
-  const ended = endSession(session.roomId);
+  var ended = endSession(session.roomId);
   if (!ended) return;
 
   activeSessionCount = Math.max(0, activeSessionCount - 1);
-
   markSessionEnded(session.seeker);
   markSessionEnded(session.listener);
-
-  // Clean up rate limiting
   messageCooldown.delete(session.seeker);
   messageCooldown.delete(session.listener);
 
-  const message = reason === 'time-expired'
+  var message = reason === 'time-expired'
     ? 'Your time together has ended. Thank you for being here.'
     : reason === 'step-away'
     ? 'The other person has stepped away. Thank you for being here.'
     : 'The session has ended.';
 
-  io.to(session.roomId).emit('session-ended', { reason, message });
+  io.to(session.roomId).emit('session-ended', { reason: reason, message: message });
 
-  const seekerSocket = io.sockets.sockets.get(session.seeker);
-  const listenerSocket = io.sockets.sockets.get(session.listener);
+  var seekerSocket = io.sockets.sockets.get(session.seeker);
+  var listenerSocket = io.sockets.sockets.get(session.listener);
   if (seekerSocket) seekerSocket.leave(session.roomId);
   if (listenerSocket) listenerSocket.leave(session.roomId);
 
   console.log('[ACTIVE SESSIONS] ' + activeSessionCount);
 }
 
-server.listen(PORT, () => {
+// SPA catch-all — must be AFTER API routes
+app.get('*', function(req, res) {
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
+
+server.listen(PORT, function() {
   console.log('\n  Someone Today is listening on port ' + PORT + '\n');
 });
