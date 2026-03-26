@@ -1,20 +1,23 @@
-const express = require('express');
-const http = require('http');
-const path = require('path');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const reportRoutes = require('./reports');
-const {
-  addToQueue, removeFromQueue, markSessionEnded
-} = require('./matching');
-const {
-  createSession, startSessionTimer, endSession,
-  getSessionBySocket, wasSessionEnded
-} = require('./sessions');
+var express = require('express');
+var http = require('http');
+var path = require('path');
+var Server = require('socket.io').Server;
+var cors = require('cors');
+var reportRoutes = require('./reports');
+var matching = require('./matching');
+var addToQueue = matching.addToQueue;
+var removeFromQueue = matching.removeFromQueue;
+var sessions = require('./sessions');
+var createSession = sessions.createSession;
+var startSessionTimer = sessions.startSessionTimer;
+var endSession = sessions.endSession;
+var getSessionBySocket = sessions.getSessionBySocket;
+var wasSessionEnded = sessions.wasSessionEnded;
+var markSessionEnded = sessions.markSessionEnded;
 
-const app = express();
-const server = http.createServer(app);
-const PORT = process.env.PORT || 3001;
+var app = express();
+var server = http.createServer(app);
+var PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
@@ -30,7 +33,6 @@ app.get('/api/active', function(req, res) {
   res.json({ active: activeSessionCount });
 });
 
-// Serve React build in production
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
 var io = new Server(server, {
@@ -48,6 +50,7 @@ io.on('connection', function(socket) {
   socket.on('join-queue', function(data) {
     var role = data.role;
     var duration = data.duration;
+    var mood = data.mood || null;
     if (role !== 'seeker' && role !== 'listener') return;
     if (duration !== 15 && duration !== 30) return;
 
@@ -59,10 +62,10 @@ io.on('connection', function(socket) {
       return;
     }
 
-    console.log('[QUEUE] ' + socket.id + ' joined as ' + role + ' for ' + duration + ' min');
+    console.log('[QUEUE] ' + socket.id + ' joined as ' + role + ' for ' + duration + ' min' + (mood ? ' (mood: ' + mood + ')' : ''));
     socket.emit('waiting', { message: 'Looking for someone...' });
 
-    var match = addToQueue(socket.id, role, duration);
+    var match = addToQueue(socket.id, role, duration, mood);
     if (match) startMatch(match);
   });
 
@@ -125,7 +128,7 @@ io.on('connection', function(socket) {
 });
 
 function startMatch(match) {
-  var session = createSession(match.seeker, match.listener, match.duration);
+  var session = createSession(match.seeker, match.listener, match.duration, match.mood);
   var seekerSocket = io.sockets.sockets.get(match.seeker);
   var listenerSocket = io.sockets.sockets.get(match.listener);
 
@@ -144,7 +147,8 @@ function startMatch(match) {
     roomId: session.roomId,
     duration: session.duration,
     startsAt: session.startedAt,
-    endsAt: session.endsAt
+    endsAt: session.endsAt,
+    mood: session.mood
   });
 
   console.log('[MATCH] ' + match.seeker + ' <-> ' + match.listener + ' for ' + match.duration + ' min');
@@ -182,7 +186,6 @@ function handleSessionEnd(session, reason) {
   console.log('[ACTIVE SESSIONS] ' + activeSessionCount);
 }
 
-// SPA catch-all — must be AFTER API routes
 app.get('*', function(req, res) {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });

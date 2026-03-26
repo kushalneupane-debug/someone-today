@@ -1,12 +1,28 @@
 import { useState, useEffect } from 'react';
 import CommunityPromise from './CommunityPromise';
 
+var moods = [
+  { emoji: '\uD83D\uDE14', label: 'Feeling down', value: 'down' },
+  { emoji: '\uD83D\uDE30', label: 'Feeling anxious', value: 'anxious' },
+  { emoji: '\uD83E\uDEC2', label: 'Feeling lonely', value: 'lonely' },
+  { emoji: '\uD83D\uDE2E\u200D\uD83D\uDCA8', label: 'Overwhelmed', value: 'overwhelmed' },
+  { emoji: '\uD83D\uDCAD', label: 'Just want to talk', value: 'talk' },
+  { emoji: '\uD83E\uDD10', label: 'Rather not say', value: 'unspecified' }
+];
+
 export default function LandingPage({ onJoin }) {
-  const [step, setStep] = useState('role');
-  const [role, setRole] = useState(null);
-  const [duration, setDuration] = useState(15);
-  const [activeCount, setActiveCount] = useState(0);
-  const [showPromise, setShowPromise] = useState(false);
+  var _step = useState('role');
+  var step = _step[0]; var setStep = _step[1];
+  var _role = useState(null);
+  var role = _role[0]; var setRole = _role[1];
+  var _duration = useState(15);
+  var duration = _duration[0]; var setDuration = _duration[1];
+  var _mood = useState(null);
+  var mood = _mood[0]; var setMood = _mood[1];
+  var _active = useState(0);
+  var activeCount = _active[0]; var setActiveCount = _active[1];
+  var _promise = useState(false);
+  var showPromise = _promise[0]; var setShowPromise = _promise[1];
 
   useEffect(function() {
     fetch('/api/active')
@@ -29,7 +45,7 @@ export default function LandingPage({ onJoin }) {
           <CommunityPromise />
         </div>
         <button onClick={function() { setShowPromise(false); }}
-          className="mt-6 text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
+          className="mt-6 text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
       </div>
     );
   }
@@ -38,11 +54,9 @@ export default function LandingPage({ onJoin }) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
-
         <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
-          <button onClick={function() { setStep('role'); }}
-            className="text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
-
+          <button onClick={function() { setStep(role === 'seeker' ? 'mood' : 'role'); }}
+            className="text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
           <div className="space-y-3">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
               <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -52,7 +66,6 @@ export default function LandingPage({ onJoin }) {
             <h2 className="text-2xl font-serif text-white">How long feels right?</h2>
             <p className="text-gray-500 text-sm font-light">You can always step away earlier.</p>
           </div>
-
           <div className="flex gap-3">
             <button onClick={function() { setDuration(15); }}
               className={'flex-1 py-5 rounded-2xl text-center transition-all border backdrop-blur ' +
@@ -71,15 +84,51 @@ export default function LandingPage({ onJoin }) {
               <span className="block text-xs mt-1 opacity-60">minutes</span>
             </button>
           </div>
-
-          <button onClick={function() { onJoin(role, duration); }}
+          <button onClick={function() { onJoin(role, duration, mood); }}
             className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/25">
             {role === 'seeker' ? 'Find someone' : 'Start listening'}
           </button>
+          <p className="text-gray-600 text-xs font-light">Nothing is recorded. Nothing is saved. Just two people, sharing a moment.</p>
+        </div>
+      </div>
+    );
+  }
 
-          <p className="text-gray-600 text-xs font-light">
-            Nothing is recorded. Nothing is saved. Just two people, sharing a moment.
-          </p>
+  if (step === 'mood') {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
+        <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
+          <button onClick={function() { setStep('role'); setMood(null); }}
+            className="text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
+          <div className="space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
+              <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-serif text-white">How are you feeling?</h2>
+            <p className="text-gray-500 text-sm font-light">This helps your listener understand where you are. No pressure.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {moods.map(function(m) {
+              return (
+                <button key={m.value} onClick={function() { setMood(m.value); }}
+                  className={'py-4 px-3 rounded-2xl text-center transition-all border backdrop-blur ' +
+                    (mood === m.value
+                      ? 'bg-emerald-500/10 border-emerald-500/30 shadow-lg shadow-emerald-500/5'
+                      : 'bg-white/[0.03] border-white/[0.08] hover:border-white/20')}>
+                  <span className="block text-2xl mb-1">{m.emoji}</span>
+                  <span className={'block text-xs font-light ' + (mood === m.value ? 'text-emerald-400' : 'text-gray-400')}>{m.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={function() { setStep('duration'); }}
+            disabled={!mood}
+            className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/25 disabled:opacity-20 disabled:cursor-not-allowed">
+            Continue
+          </button>
         </div>
       </div>
     );
@@ -89,7 +138,6 @@ export default function LandingPage({ onJoin }) {
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-purple-500/3 blur-3xl pointer-events-none" />
-
       <div className="relative z-10 text-center space-y-10 max-w-md w-full">
         <div className="space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
@@ -97,7 +145,6 @@ export default function LandingPage({ onJoin }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0" />
             </svg>
           </div>
-
           <div className="space-y-4">
             <h1 className="text-3xl sm:text-4xl font-serif text-white leading-tight tracking-tight">
               You don't have to go<br />through today alone
@@ -107,7 +154,6 @@ export default function LandingPage({ onJoin }) {
             </p>
           </div>
         </div>
-
         {activeCount > 0 && (
           <div className="flex items-center justify-center gap-2 animate-fade-in">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft shadow-lg shadow-emerald-400/50" />
@@ -116,9 +162,8 @@ export default function LandingPage({ onJoin }) {
             </p>
           </div>
         )}
-
         <div className="space-y-3">
-          <button onClick={function() { setRole('seeker'); setStep('duration'); }}
+          <button onClick={function() { setRole('seeker'); setStep('mood'); }}
             className="w-full py-5 px-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-emerald-500/30 transition-all text-left group backdrop-blur-sm">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500/20 group-hover:shadow-lg group-hover:shadow-emerald-500/10 transition-all">
@@ -135,7 +180,6 @@ export default function LandingPage({ onJoin }) {
               </svg>
             </div>
           </button>
-
           <button onClick={function() { setRole('listener'); setStep('duration'); }}
             className="w-full py-5 px-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-emerald-500/30 transition-all text-left group backdrop-blur-sm">
             <div className="flex items-center gap-4">
@@ -154,7 +198,6 @@ export default function LandingPage({ onJoin }) {
             </div>
           </button>
         </div>
-
         <div className="space-y-4 pt-2">
           <div className="flex items-center justify-center gap-6">
             <div className="flex items-center gap-1.5">
@@ -176,7 +219,6 @@ export default function LandingPage({ onJoin }) {
               <span className="text-xs text-gray-600 font-light">Nothing saved</span>
             </div>
           </div>
-
           <button onClick={function() { setShowPromise(true); }}
             className="text-xs text-gray-600 hover:text-emerald-400 transition-colors font-light">
             Our community promise
