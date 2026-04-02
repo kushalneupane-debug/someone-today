@@ -259,6 +259,33 @@ function handleSessionEnd(session, reason) {
   console.log('[ACTIVE SESSIONS] ' + activeSessionCount);
 }
 
+
+app.get('/api/test-discord', function(req, res) {
+  var webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhookUrl) {
+    return res.json({ ok: false, error: 'DISCORD_WEBHOOK_URL is NOT set in environment' });
+  }
+  var https = require('https');
+  var body = JSON.stringify({ content: '**Test from Someone Today!** Your Discord webhook is working.' });
+  try {
+    var parsed = new URL(webhookUrl);
+    var options = { hostname: parsed.hostname, path: parsed.pathname + parsed.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } };
+    var r = https.request(options, function(resp) {
+      var d = '';
+      resp.on('data', function(c) { d += c; });
+      resp.on('end', function() {
+        console.log('[DISCORD TEST] status: ' + resp.statusCode + ' body: ' + d);
+      });
+    });
+    r.on('error', function(e) { console.log('[DISCORD TEST] error: ' + e.message); });
+    r.write(body);
+    r.end();
+    res.json({ ok: true, message: 'Webhook fired! Check your Discord channel.', urlPrefix: webhookUrl.substring(0, 45) + '...' });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 app.get('*', function(req, res) {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
