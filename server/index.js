@@ -100,6 +100,7 @@ io.on('connection', function(socket) {
       if (counts.listeners === 0) {
         socket.emit('no-listeners');
         push.notifyListeners();
+        push.notifyDiscord();
       }
     }
   });
