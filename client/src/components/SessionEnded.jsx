@@ -1,98 +1,193 @@
 import { useState } from 'react';
 
-export default function SessionEnded({ role, onGoHome, onReport, onFeedback }) {
-  var _reported = useState(false);
-  var reported = _reported[0];
-  var setReported = _reported[1];
-  var _fbGiven = useState(false);
-  var feedbackGiven = _fbGiven[0];
-  var setFeedbackGiven = _fbGiven[1];
-  var _selFb = useState(null);
-  var selectedFeedback = _selFb[0];
-  var setSelectedFeedback = _selFb[1];
+function getReflection(role, mood, totalMessages, durationSecs) {
+  var mins = Math.floor(durationSecs / 60);
+
+  if (totalMessages === 0) {
+    return "Sometimes just showing up is the bravest thing. You were here, and that matters.";
+  }
+
+  if (totalMessages >= 30) {
+    if (role === 'seeker') {
+      return "You had a real conversation — " + totalMessages + " messages in " + mins + " minutes. Opening up takes courage.";
+    }
+    return "You exchanged " + totalMessages + " messages in " + mins + " minutes. Your willingness to listen made a difference.";
+  }
+
+  if (totalMessages >= 10) {
+    if (mood === 'down') return "You reached out when things felt heavy. That takes strength.";
+    if (mood === 'anxious') return "You showed up even when anxiety made it hard. That's brave.";
+    if (mood === 'lonely') return "For " + mins + " minutes, you weren't alone. That connection was real.";
+    if (mood === 'overwhelmed') return "You let someone share the weight, even briefly. That's okay.";
+    if (role === 'listener') return "You gave someone " + mins + " minutes of your time. That's a gift.";
+    return "A meaningful exchange — " + totalMessages + " messages, " + mins + " minutes of real connection.";
+  }
+
+  if (role === 'listener') {
+    return "Even a few moments of presence can mean the world to someone. Thank you.";
+  }
+  return "You took a step today. That's enough.";
+}
+
+function formatDuration(secs) {
+  if (!secs || secs <= 0) return '0m';
+  var m = Math.floor(secs / 60);
+  var s = secs % 60;
+  if (m === 0) return s + 's';
+  if (s === 0) return m + 'm';
+  return m + 'm ' + s + 's';
+}
+
+export default function SessionEnded({
+  role,
+  onGoHome,
+  onReport,
+  onFeedback,
+  sessionStats,
+  myMessageCount,
+  totalMessages,
+  sessionStartTime
+}) {
+  const [feedback, setFeedback] = useState(null);
+  const [showReport, setShowReport] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
+
+  var actualDuration = sessionStats
+    ? sessionStats.actualDuration
+    : (sessionStartTime ? Math.round((Date.now() - sessionStartTime) / 1000) : 0);
+  var serverTotal = sessionStats ? sessionStats.totalMessages : 0;
+  var displayTotal = totalMessages || serverTotal || 0;
+  var partnerMessages = displayTotal - (myMessageCount || 0);
+  if (partnerMessages < 0) partnerMessages = 0;
+  var reflection = getReflection(role, sessionStats ? sessionStats.mood : null, displayTotal, actualDuration);
+
+  var feedbackOptions = [
+    { value: 'positive', emoji: '💚', label: 'Yes' },
+    { value: 'neutral', emoji: '😐', label: 'Neutral' },
+    { value: 'negative', emoji: '💔', label: 'Not really' }
+  ];
+
+  var feedbackResponses = {
+    positive: "That means a lot. Every good conversation starts with someone showing up.",
+    neutral: "That's okay. Not every moment lands — but you were here.",
+    negative: "We're sorry. Thank you for being honest."
+  };
+
+  function handleFeedbackClick(val) {
+    setFeedback(val);
+    onFeedback(val);
+  }
 
   function handleReport(reason) {
     onReport(reason);
-    setReported(true);
-  }
-
-  function handleFeedback(rating) {
-    setSelectedFeedback(rating);
-    setFeedbackGiven(true);
-    if (onFeedback) onFeedback(rating);
+    setReportSent(true);
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
-
-      <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
-          <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-          </svg>
+    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
+      <div className="max-w-md w-full animate-fade-in space-y-6">
+        <div className="text-center">
+          <div className="text-3xl mb-3">✦</div>
+          <h2 className="text-xl font-display text-white mb-2">
+            {role === 'listener' ? 'Thank you for listening' : 'Thank you for being here'}
+          </h2>
+          <p className="text-white/50 text-sm">{reflection}</p>
         </div>
 
-        <div className="space-y-3">
-          <h2 className="text-2xl font-serif text-white">This moment has ended.</h2>
-          <p className="text-gray-500 text-sm font-light leading-relaxed">
-            {role === 'seeker'
-              ? 'Thank you for reaching out. It takes courage to ask for presence.'
-              : 'Thank you for being here. Your presence mattered more than you know.'}
-          </p>
-        </div>
-
-        {!feedbackGiven ? (
-          <div className="space-y-4">
-            <p className="text-gray-400 text-sm font-light">Did this moment help?</p>
-            <div className="flex items-center justify-center gap-3">
-              <button onClick={function() { handleFeedback('positive'); }}
-                className="flex flex-col items-center gap-1.5 px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all">
-                <span className="text-2xl">💚</span>
-                <span className="text-xs text-gray-500 font-light">Yes</span>
-              </button>
-              <button onClick={function() { handleFeedback('neutral'); }}
-                className="flex flex-col items-center gap-1.5 px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-gray-500/30 hover:bg-white/[0.05] transition-all">
-                <span className="text-2xl">😐</span>
-                <span className="text-xs text-gray-500 font-light">Neutral</span>
-              </button>
-              <button onClick={function() { handleFeedback('negative'); }}
-                className="flex flex-col items-center gap-1.5 px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-red-500/20 hover:bg-red-500/5 transition-all">
-                <span className="text-2xl">💔</span>
-                <span className="text-xs text-gray-500 font-light">Not really</span>
-              </button>
+        {displayTotal > 0 && (
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 backdrop-blur">
+            <h3 className="text-white/40 text-xs uppercase tracking-wider mb-3 text-center">Session Summary</h3>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <div className="text-lg text-emerald-400">{formatDuration(actualDuration)}</div>
+                <div className="text-white/30 text-xs mt-1">Duration</div>
+              </div>
+              <div>
+                <div className="text-lg text-emerald-400">{displayTotal}</div>
+                <div className="text-white/30 text-xs mt-1">Messages</div>
+              </div>
+              <div>
+                <div className="text-lg text-emerald-400">{myMessageCount || 0}</div>
+                <div className="text-white/30 text-xs mt-1">You sent</div>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="animate-fade-in py-2">
-            <p className="text-emerald-400/70 text-sm font-light">
-              {selectedFeedback === 'positive' && 'We are glad it helped. \uD83D\uDC9A'}
-              {selectedFeedback === 'neutral' && 'Thank you for sharing.'}
-              {selectedFeedback === 'negative' && 'We hear you. Every moment is different.'}
-            </p>
+            {displayTotal >= 2 && (
+              <div className="mt-3 pt-3 border-t border-white/[0.06] text-center">
+                <span className="text-white/30 text-xs">
+                  {myMessageCount > partnerMessages
+                    ? 'You led the conversation'
+                    : partnerMessages > myMessageCount
+                    ? 'Your partner shared more'
+                    : 'An even exchange'}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
-        <button onClick={onGoHome}
-          className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/25">
+        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 backdrop-blur text-center">
+          {!feedback ? (
+            <>
+              <p className="text-white/50 text-sm mb-4">Did this conversation help?</p>
+              <div className="flex justify-center gap-4">
+                {feedbackOptions.map(function(opt) {
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={function() { handleFeedbackClick(opt.value); }}
+                      className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl hover:bg-white/[0.05] transition-colors"
+                    >
+                      <span className="text-xl">{opt.emoji}</span>
+                      <span className="text-white/40 text-xs">{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <p className="text-white/50 text-sm">{feedbackResponses[feedback]}</p>
+          )}
+        </div>
+
+        <button
+          onClick={onGoHome}
+          className="w-full p-3 rounded-xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 hover:bg-emerald-500/30 transition-all text-sm"
+        >
           Return home
         </button>
 
-        {!reported ? (
-          <button onClick={function() { handleReport('post-session'); }}
-            className="text-xs text-gray-600 hover:text-red-400/70 transition-colors font-light">
-            Something did not feel right? Report anonymously
-          </button>
-        ) : (
-          <p className="text-xs text-emerald-400/50 font-light animate-fade-in">Thank you. Your report has been noted.</p>
-        )}
-
-        <div className="flex items-center justify-center gap-2 pt-4">
-          <svg className="w-3.5 h-3.5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-          </svg>
-          <p className="text-gray-700 text-xs font-light">This conversation was not saved. No one will ever see it again.</p>
+        <div className="text-center">
+          {!showReport && !reportSent && (
+            <button
+              onClick={function() { setShowReport(true); }}
+              className="text-white/20 hover:text-white/40 text-xs transition-colors"
+            >
+              Report this conversation
+            </button>
+          )}
+          {showReport && !reportSent && (
+            <div className="flex flex-wrap justify-center gap-2 mt-2">
+              {['Inappropriate', 'Harmful', 'Spam', 'Other'].map(function(reason) {
+                return (
+                  <button
+                    key={reason}
+                    onClick={function() { handleReport(reason); }}
+                    className="px-3 py-1 rounded-full text-xs bg-white/[0.05] border border-white/[0.08] text-white/40 hover:text-white/60 transition-all"
+                  >
+                    {reason}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {reportSent && (
+            <p className="text-white/30 text-xs">Report received. Thank you.</p>
+          )}
         </div>
+
+        <p className="text-center text-white/20 text-xs">
+          This conversation was not saved. Everything is anonymous.
+        </p>
       </div>
     </div>
   );
