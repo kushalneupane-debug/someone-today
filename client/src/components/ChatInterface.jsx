@@ -34,12 +34,14 @@ function ChatInterface({
   onTyping,
   onStopTyping,
   onStepAway,
-  isTyping,
+  partnerTyping,
+  mood,
   onRequestExtend,
   onRespondExtend,
   extensionRequested,
-  extensionPending,
-  extended,
+  extensionIncoming,
+  extensionUsed,
+  extensionConfirmed,
 }) {
   const [input, setInput] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
@@ -64,7 +66,7 @@ function ChatInterface({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [messages, partnerTyping]);
 
   useEffect(() => {
     if (nudgeTimer.current) clearTimeout(nudgeTimer.current);
@@ -122,7 +124,7 @@ function ChatInterface({
   const nudges = role === "seeker" ? seekerNudges : listenerNudges;
   const currentNudge = nudges[nudgeIndex % nudges.length];
   const isLowTime = timeLeft <= 120 && timeLeft > 0;
-  const canExtend = isLowTime && !extended && !extensionPending;
+  const canExtend = isLowTime && !extensionUsed && !extensionRequested;
 
   return (
     <div className="flex flex-col h-screen bg-gray-950">
@@ -161,7 +163,7 @@ function ChatInterface({
             </button>
           )}
 
-          {extensionPending && (
+          {extensionRequested && (
             <span className="text-xs text-yellow-400 animate-pulse">
               Waiting...
             </span>
@@ -187,7 +189,7 @@ function ChatInterface({
         </div>
       </div>
 
-      {extensionRequested && (
+      {extensionIncoming && (
         <div className="px-4 py-3 bg-purple-900/30 border-b border-purple-700/30 flex items-center justify-between">
           <p className="text-sm text-purple-200">
             Your partner wants to extend by 5 minutes
@@ -209,7 +211,7 @@ function ChatInterface({
         </div>
       )}
 
-      {extended && timeLeft > 0 && (
+      {extensionConfirmed && timeLeft > 0 && (
         <div className="px-4 py-2 bg-green-900/20 border-b border-green-800/30 text-center">
           <p className="text-xs text-green-400">
             {"\u{2713}"} Session extended by 5 minutes
@@ -244,7 +246,7 @@ function ChatInterface({
           </div>
         ))}
 
-        {isTyping && (
+        {partnerTyping && (
           <div className="flex justify-start">
             <div className="bg-gray-800 px-4 py-3 rounded-2xl rounded-bl-md">
               <div className="flex gap-1">
