@@ -1,40 +1,33 @@
-const queue = {
-  seekers: [],
-  listeners: []
-};
+var queue = { seekers: [], listeners: [] };
+var activeSessions = new Set();
 
-const activeSessions = new Set();
-
-function addToQueue(socketId, role, duration) {
+function addToQueue(socketId, role, duration, mood) {
   if (activeSessions.has(socketId)) return null;
   removeFromQueue(socketId);
-  const entry = { socketId, duration };
-
+  var entry = { socketId: socketId, duration: duration, mood: mood || null };
   if (role === 'seeker') {
     queue.seekers.push(entry);
   } else if (role === 'listener') {
     queue.listeners.push(entry);
   }
-
   return tryMatch();
 }
 
 function tryMatch() {
-  for (let i = 0; i < queue.seekers.length; i++) {
-    const seeker = queue.seekers[i];
-    for (let j = 0; j < queue.listeners.length; j++) {
-      const listener = queue.listeners[j];
-
+  for (var i = 0; i < queue.seekers.length; i++) {
+    var seeker = queue.seekers[i];
+    for (var j = 0; j < queue.listeners.length; j++) {
+      var listener = queue.listeners[j];
       if (seeker.duration === listener.duration) {
         queue.seekers.splice(i, 1);
         queue.listeners.splice(j, 1);
         activeSessions.add(seeker.socketId);
         activeSessions.add(listener.socketId);
-
         return {
           seeker: seeker.socketId,
           listener: listener.socketId,
-          duration: seeker.duration
+          duration: seeker.duration,
+          mood: seeker.mood
         };
       }
     }
@@ -43,8 +36,12 @@ function tryMatch() {
 }
 
 function removeFromQueue(socketId) {
-  queue.seekers = queue.seekers.filter(e => e.socketId !== socketId);
-  queue.listeners = queue.listeners.filter(e => e.socketId !== socketId);
+  queue.seekers = queue.seekers.filter(function(e) { return e.socketId !== socketId; });
+  queue.listeners = queue.listeners.filter(function(e) { return e.socketId !== socketId; });
+}
+
+function getQueueCounts() {
+  return { seekers: queue.seekers.length, listeners: queue.listeners.length };
 }
 
 function markSessionEnded(socketId) {
@@ -56,8 +53,9 @@ function isInSession(socketId) {
 }
 
 module.exports = {
-  addToQueue,
-  removeFromQueue,
-  markSessionEnded,
-  isInSession
+  addToQueue: addToQueue,
+  removeFromQueue: removeFromQueue,
+  getQueueCounts: getQueueCounts,
+  markSessionEnded: markSessionEnded,
+  isInSession: isInSession
 };

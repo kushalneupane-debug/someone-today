@@ -7,13 +7,16 @@ var reportRoutes = require('./reports');
 var matching = require('./matching');
 var addToQueue = matching.addToQueue;
 var removeFromQueue = matching.removeFromQueue;
+var getQueueCounts = matching.getQueueCounts;
 var sessions = require('./sessions');
 var createSession = sessions.createSession;
 var startSessionTimer = sessions.startSessionTimer;
+var extendSession = sessions.extendSession;
 var endSession = sessions.endSession;
 var getSessionBySocket = sessions.getSessionBySocket;
 var wasSessionEnded = sessions.wasSessionEnded;
 var markSessionEnded = sessions.markSessionEnded;
+var push = require('./push');
 
 var app = express();
 var server = http.createServer(app);
@@ -21,6 +24,7 @@ var PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
 app.use('/api/report', reportRoutes);
 
 app.get('/api/health', function(req, res) {
@@ -28,9 +32,32 @@ app.get('/api/health', function(req, res) {
 });
 
 var activeSessionCount = 0;
-
 app.get('/api/active', function(req, res) {
   res.json({ active: activeSessionCount });
+});
+
+// Push notification routes
+app.get('/api/push/vapid-public-key', function(req, res) {
+  res.json({ key: push.getVapidPublicKey() });
+});
+
+app.post('/api/push/subscribe', function(req, res) {
+  var subscription = req.body.subscription;
+  var role = req.body.role;
+  if (!subscription || !subscription.endpoint) {
+    return res.status(400).json({ error: 'Invalid subscription' });
+  }
+  push.subscribe(subscription, role || 'listener');
+  res.json({ success: true });
+});
+
+app.post('/api/push/unsubscribe', function(req, res) {
+  var endpoint = req.body.endpoint;
+  if (!endpoint) {
+    return res.status(400).json({ error: 'Invalid endpoint' });
+  }
+  push.unsubscribe(endpoint);
+  res.json({ success: true });
 });
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
@@ -66,7 +93,15 @@ io.on('connection', function(socket) {
     socket.emit('waiting', { message: 'Looking for someone...' });
 
     var match = addToQueue(socket.id, role, duration, mood);
-    if (match) startMatch(match);
+    if (match) {
+      startMatch(match);
+    } else if (role === 'seeker') {
+      var counts = getQueueCounts();
+      if (counts.listeners === 0) {
+        socket.emit('no-listeners');
+        push.notifyListeners();
+      }
+    }
   });
 
   socket.on('send-message', function(data) {
@@ -102,6 +137,40 @@ io.on('connection', function(socket) {
     io.to(target).emit('user-stopped-typing');
   });
 
+  socket.on('request-extend', function() {
+    var session = getSessionBySocket(socket.id);
+    if (!session) return;
+    if (session.extended) return;
+    session.extensionRequester = socket.id;
+    var target = socket.id === session.seeker ? session.listener : session.seeker;
+    io.to(target).emit('extension-requested');
+    console.log('[EXTEND] ' + socket.id + ' requested extension');
+  });
+
+  socket.on('respond-extend', function(data) {
+    var session = getSessionBySocket(socket.id);
+    if (!session) return;
+    if (session.extended) return;
+    if (!session.extensionRequester) return;
+
+    if (data.accepted) {
+      var updated = extendSession(session.roomId, 5, function(endedSession) {
+        console.log('[TIMER] Session ' + endedSession.roomId + ' ended');
+        handleSessionEnd(endedSession, 'time-expired');
+      });
+      if (updated) {
+        io.to(session.roomId).emit('extension-accepted', {
+          newEndsAt: updated.endsAt
+        });
+        console.log('[EXTEND] Extension accepted for ' + session.roomId);
+      }
+    } else {
+      io.to(session.extensionRequester).emit('extension-declined');
+      session.extensionRequester = null;
+      console.log('[EXTEND] Extension declined for ' + session.roomId);
+    }
+  });
+
   socket.on('step-away', function() {
     var session = getSessionBySocket(socket.id);
     if (!session) return;
@@ -129,6 +198,7 @@ io.on('connection', function(socket) {
 
 function startMatch(match) {
   var session = createSession(match.seeker, match.listener, match.duration, match.mood);
+
   var seekerSocket = io.sockets.sockets.get(match.seeker);
   var listenerSocket = io.sockets.sockets.get(match.listener);
 
@@ -170,13 +240,15 @@ function handleSessionEnd(session, reason) {
   messageCooldown.delete(session.seeker);
   messageCooldown.delete(session.listener);
 
-  var message = reason === 'time-expired'
-    ? 'Your time together has ended. Thank you for being here.'
-    : reason === 'step-away'
-    ? 'The other person has stepped away. Thank you for being here.'
-    : 'The session has ended.';
+  var message =
+    reason === 'time-expired' ? 'Your time together has ended. Thank you for being here.' :
+    reason === 'step-away' ? 'The other person has stepped away. Thank you for being here.' :
+    'The session has ended.';
 
-  io.to(session.roomId).emit('session-ended', { reason: reason, message: message });
+  io.to(session.roomId).emit('session-ended', {
+    reason: reason,
+    message: message
+  });
 
   var seekerSocket = io.sockets.sockets.get(session.seeker);
   var listenerSocket = io.sockets.sockets.get(session.listener);
@@ -191,5 +263,5 @@ app.get('*', function(req, res) {
 });
 
 server.listen(PORT, function() {
-  console.log('\n  Someone Today is listening on port ' + PORT + '\n');
+  console.log('\n Someone Today is listening on port ' + PORT + '\n');
 });

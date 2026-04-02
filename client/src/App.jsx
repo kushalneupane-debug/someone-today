@@ -4,174 +4,241 @@ import LandingPage from './components/LandingPage';
 import WaitingScreen from './components/WaitingScreen';
 import ChatInterface from './components/ChatInterface';
 import SessionEnded from './components/SessionEnded';
+import CommunityPromise from './components/CommunityPromise';
+import CrisisRedirection from './components/CrisisRedirection';
 
-const SOCKET_URL = import.meta.env.VITE_SERVER_URL || '';
+const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
-function playNotifSound() {
-  try {
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 520;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.4);
-  } catch (e) {}
-}
-
-export default function App() {
+function App() {
   const [screen, setScreen] = useState('landing');
   const [role, setRole] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [sessionDuration, setSessionDuration] = useState(0);
-  const [isPartnerTyping, setIsPartnerTyping] = useState(false);
-
+  const [endsAt, setEndsAt] = useState(null);
+  const [roomId, setRoomId] = useState(null);
+  const [partnerTyping, setPartnerTyping] = useState(false);
+  const [showPromise, setShowPromise] = useState(false);
+  const [showCrisis, setShowCrisis] = useState(false);
+  const [mood, setMood] = useState(null);
+  const [noListeners, setNoListeners] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [extensionRequested, setExtensionRequested] = useState(false);
+  const [extensionIncoming, setExtensionIncoming] = useState(false);
+  const [extensionUsed, setExtensionUsed] = useState(false);
+  const [extensionConfirmed, setExtensionConfirmed] = useState(false);
   const socketRef = useRef(null);
-  const timerRef = useRef(null);
+  const roleRef = useRef(null);
 
-  useEffect(() => {
-    var socket = io(SOCKET_URL, { autoConnect: true, reconnection: true, reconnectionAttempts: 5 });
+  useEffect(function() {
+    roleRef.current = role;
+  }, [role]);
+
+  useEffect(function() {
+    var socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
-    socket.on('connect', function() { console.log('[Connected]', socket.id); });
-    socket.on('waiting', function() { setScreen('waiting'); });
-
-    socket.on('matched', function(data) {
-      setMessages([]);
-      setSessionDuration(data.duration);
-      var remaining = Math.max(0, Math.round((data.endsAt - Date.now()) / 1000));
-      setTimeLeft(remaining);
-      setIsPartnerTyping(false);
-      setScreen('chat');
-      startTimer(remaining);
+    socket.on('waiting', function() {
+      setScreen('waiting');
     });
 
-    socket.on('session-ended', function() {
-      stopTimer();
-      setIsPartnerTyping(false);
-      setScreen('ended');
+    socket.on('matched', function(data) {
+      setRoomId(data.roomId);
+      setEndsAt(data.endsAt);
+      setMessages([]);
+      setNoListeners(false);
+      setExtensionRequested(false);
+      setExtensionIncoming(false);
+      setExtensionUsed(false);
+      setExtensionConfirmed(false);
+      setScreen('chat');
+    });
+
+    socket.on('new-message', function(msg) {
+      var currentRole = roleRef.current;
+      var sender = msg.from === currentRole ? 'me' : 'them';
+      setMessages(function(prev) {
+        return prev.concat([{ sender: sender, text: msg.text, time: msg.time }]);
+      });
+      setPartnerTyping(false);
     });
 
     socket.on('user-typing', function() {
-      setIsPartnerTyping(true);
+      setPartnerTyping(true);
     });
 
     socket.on('user-stopped-typing', function() {
-      setIsPartnerTyping(false);
+      setPartnerTyping(false);
     });
 
-    socket.on('disconnect', function() { console.log('[Disconnected]'); });
+    socket.on('session-ended', function() {
+      setScreen('ended');
+    });
 
-    return function() { stopTimer(); socket.disconnect(); };
+    socket.on('no-listeners', function() {
+      setNoListeners(true);
+    });
+
+    socket.on('extension-requested', function() {
+      setExtensionIncoming(true);
+    });
+
+    socket.on('extension-accepted', function(data) {
+      setEndsAt(data.newEndsAt);
+      setExtensionRequested(false);
+      setExtensionIncoming(false);
+      setExtensionUsed(true);
+      setExtensionConfirmed(true);
+      setTimeout(function() { setExtensionConfirmed(false); }, 3000);
+    });
+
+    socket.on('extension-declined', function() {
+      setExtensionRequested(false);
+    });
+
+    return function() { socket.disconnect(); };
   }, []);
 
-  useEffect(() => {
-    var socket = socketRef.current;
-    if (!socket) return;
-
-    function handleMessage(data) {
-      setMessages(function(prev) {
-        return prev.concat([{ text: data.text, sender: data.from === role ? 'me' : 'them' }]);
+  var subscribeToPush = useCallback(async function() {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      var reg = await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.ready;
+      var resp = await fetch('/api/push/vapid-public-key');
+      var json = await resp.json();
+      if (!json.key) return;
+      var sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: json.key
       });
-      if (data.from !== role) {
-        playNotifSound();
-        setIsPartnerTyping(false);
-      }
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub })
+      });
+      setPushEnabled(true);
+    } catch (err) {
+      console.error('Push subscription failed:', err);
     }
+  }, []);
 
-    socket.off('new-message');
-    socket.on('new-message', handleMessage);
-    return function() { socket.off('new-message', handleMessage); };
-  }, [role]);
-
-  function startTimer(seconds) {
-    stopTimer();
-    var remaining = seconds;
-    setTimeLeft(remaining);
-    timerRef.current = setInterval(function() {
-      remaining -= 1;
-      setTimeLeft(remaining);
-      if (remaining <= 0) stopTimer();
-    }, 1000);
-  }
-
-  function stopTimer() {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-  }
-
-  var handleJoin = useCallback(function(selectedRole, duration) {
+  var joinQueue = function(selectedRole, duration, selectedMood) {
     setRole(selectedRole);
-    setSessionDuration(duration);
-    setScreen('waiting');
-    if (socketRef.current) socketRef.current.emit('join-queue', { role: selectedRole, duration: duration });
-  }, []);
+    setMood(selectedMood || null);
+    setNoListeners(false);
+    if (socketRef.current) {
+      socketRef.current.emit('join-queue', {
+        role: selectedRole,
+        duration: duration,
+        mood: selectedMood || null
+      });
+    }
+  };
 
-  var handleLeaveQueue = useCallback(function() {
-    if (socketRef.current) socketRef.current.emit('leave-queue');
-    setScreen('landing');
-    setRole(null);
-  }, []);
+  var sendMessage = function(text) {
+    if (socketRef.current) {
+      socketRef.current.emit('send-message', { text: text });
+    }
+  };
 
-  var handleSendMessage = useCallback(function(text) {
-    if (socketRef.current) socketRef.current.emit('send-message', { text: text });
+  var emitTyping = function() {
+    if (socketRef.current) socketRef.current.emit('typing');
+  };
+
+  var emitStopTyping = function() {
     if (socketRef.current) socketRef.current.emit('stop-typing');
-  }, []);
+  };
 
-  var handleStepAway = useCallback(function() {
+  var handleStepAway = function() {
     if (socketRef.current) socketRef.current.emit('step-away');
-    stopTimer();
-    setIsPartnerTyping(false);
-    setScreen('ended');
-  }, []);
+  };
 
-  var handleGoHome = useCallback(function() {
+  var handleRequestExtend = function() {
+    if (socketRef.current) {
+      socketRef.current.emit('request-extend');
+      setExtensionRequested(true);
+    }
+  };
+
+  var handleRespondExtend = function(accepted) {
+    if (socketRef.current) {
+      socketRef.current.emit('respond-extend', { accepted: accepted });
+      setExtensionIncoming(false);
+    }
+  };
+
+  var goHome = function() {
     setScreen('landing');
     setRole(null);
     setMessages([]);
-    setTimeLeft(0);
-    setIsPartnerTyping(false);
-  }, []);
+    setEndsAt(null);
+    setRoomId(null);
+    setPartnerTyping(false);
+    setMood(null);
+    setNoListeners(false);
+    setExtensionRequested(false);
+    setExtensionIncoming(false);
+    setExtensionUsed(false);
+    setExtensionConfirmed(false);
+  };
 
-  var handleReport = useCallback(function(reason) {
-    fetch('/api/report', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason: reason, timestamp: Date.now() }),
-    }).catch(function() {});
-  }, []);
-
-  var handleTyping = useCallback(function() {
-    if (socketRef.current) socketRef.current.emit('typing');
-  }, []);
-
-  var handleStopTyping = useCallback(function() {
-    if (socketRef.current) socketRef.current.emit('stop-typing');
-  }, []);
-
-  var handleFeedback = useCallback(function(rating) {
-    if (socketRef.current) socketRef.current.emit('session-feedback', { rating: rating });
-  }, []);
+  if (showCrisis) {
+    return <CrisisRedirection onBack={function() { setShowCrisis(false); }} />;
+  }
+  if (showPromise) {
+    return <CommunityPromise onBack={function() { setShowPromise(false); }} />;
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-sand-50">
-      {screen === 'landing' && <LandingPage onJoin={handleJoin} />}
-      {screen === 'waiting' && <WaitingScreen role={role} onLeave={handleLeaveQueue} />}
+    <div className="min-h-screen bg-[#0a0a0f] text-white">
+      {screen === 'landing' && (
+        <LandingPage
+          onJoin={joinQueue}
+          onShowPromise={function() { setShowPromise(true); }}
+          onShowCrisis={function() { setShowCrisis(true); }}
+          onSubscribePush={subscribeToPush}
+          pushEnabled={pushEnabled}
+        />
+      )}
+      {screen === 'waiting' && (
+        <WaitingScreen
+          role={role}
+          noListeners={noListeners}
+          onSubscribePush={subscribeToPush}
+          pushEnabled={pushEnabled}
+          onLeave={function() {
+            if (socketRef.current) socketRef.current.emit('leave-queue');
+            goHome();
+          }}
+        />
+      )}
       {screen === 'chat' && (
-        <ChatInterface messages={messages} onSend={handleSendMessage}
-          onStepAway={handleStepAway} onReport={handleReport}
-          timeLeft={timeLeft} role={role}
-          isPartnerTyping={isPartnerTyping}
-          onTyping={handleTyping} onStopTyping={handleStopTyping} />
+        <ChatInterface
+          messages={messages}
+          onSend={sendMessage}
+          endsAt={endsAt}
+          onStepAway={handleStepAway}
+          partnerTyping={partnerTyping}
+          onTyping={emitTyping}
+          onStopTyping={emitStopTyping}
+          role={role}
+          mood={mood}
+          extensionRequested={extensionRequested}
+          extensionIncoming={extensionIncoming}
+          extensionUsed={extensionUsed}
+          extensionConfirmed={extensionConfirmed}
+          onRequestExtend={handleRequestExtend}
+          onRespondExtend={handleRespondExtend}
+        />
       )}
       {screen === 'ended' && (
-        <SessionEnded role={role} onGoHome={handleGoHome}
-          onReport={handleReport} onFeedback={handleFeedback} />
+        <SessionEnded
+          role={role}
+          onGoHome={goHome}
+          onReport={function() {}}
+          onFeedback={function() {}}
+        />
       )}
     </div>
   );
 }
+
+export default App;

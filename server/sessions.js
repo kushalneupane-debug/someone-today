@@ -12,7 +12,9 @@ function createSession(seeker, listener, duration, mood) {
     mood: mood || null,
     startedAt: now,
     endsAt: now + duration * 60 * 1000,
-    timer: null
+    timer: null,
+    extended: false,
+    extensionRequester: null
   };
   sessions.set(roomId, session);
   sessions.set(seeker, session);
@@ -24,7 +26,23 @@ function startSessionTimer(roomId, onEnd) {
   var session = sessions.get(roomId);
   if (!session) return;
   var remaining = session.endsAt - Date.now();
-  session.timer = setTimeout(function() { onEnd(session); }, remaining);
+  session.timer = setTimeout(function() {
+    onEnd(session);
+  }, remaining);
+}
+
+function extendSession(roomId, extraMinutes, onEnd) {
+  var session = sessions.get(roomId);
+  if (!session) return null;
+  if (session.extended) return null;
+  if (session.timer) clearTimeout(session.timer);
+  session.endsAt = session.endsAt + extraMinutes * 60 * 1000;
+  session.extended = true;
+  var remaining = session.endsAt - Date.now();
+  session.timer = setTimeout(function() {
+    onEnd(session);
+  }, remaining);
+  return session;
 }
 
 function endSession(roomId) {
@@ -52,6 +70,7 @@ function wasSessionEnded(socketId) {
 module.exports = {
   createSession: createSession,
   startSessionTimer: startSessionTimer,
+  extendSession: extendSession,
   endSession: endSession,
   getSessionBySocket: getSessionBySocket,
   markSessionEnded: markSessionEnded,

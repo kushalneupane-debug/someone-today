@@ -10,7 +10,7 @@ var moods = [
   { emoji: '\uD83E\uDD10', label: 'Rather not say', value: 'unspecified' }
 ];
 
-export default function LandingPage({ onJoin }) {
+export default function LandingPage({ onJoin, pushEnabled, onSubscribePush }) {
   var _step = useState('role');
   var step = _step[0]; var setStep = _step[1];
   var _role = useState(null);
@@ -44,8 +44,7 @@ export default function LandingPage({ onJoin }) {
         <div className="bg-white/5 backdrop-blur rounded-2xl p-8 border border-white/10 max-w-sm">
           <CommunityPromise />
         </div>
-        <button onClick={function() { setShowPromise(false); }}
-          className="mt-6 text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
+        <button onClick={function() { setShowPromise(false); }} className="mt-6 text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
       </div>
     );
   }
@@ -55,8 +54,7 @@ export default function LandingPage({ onJoin }) {
       <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
         <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
-          <button onClick={function() { setStep(role === 'seeker' ? 'mood' : 'role'); }}
-            className="text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
+          <button onClick={function() { setStep(role === 'seeker' ? 'mood' : 'role'); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
           <div className="space-y-3">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
               <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -67,25 +65,16 @@ export default function LandingPage({ onJoin }) {
             <p className="text-gray-500 text-sm font-light">You can always step away earlier.</p>
           </div>
           <div className="flex gap-3">
-            <button onClick={function() { setDuration(15); }}
-              className={'flex-1 py-5 rounded-2xl text-center transition-all border backdrop-blur ' +
-                (duration === 15
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/5'
-                  : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20')}>
+            <button onClick={function() { setDuration(15); }} className={'flex-1 py-5 rounded-2xl text-center transition-all border backdrop-blur ' + (duration === 15 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/5' : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20')}>
               <span className="block text-3xl font-serif">15</span>
               <span className="block text-xs mt-1 opacity-60">minutes</span>
             </button>
-            <button onClick={function() { setDuration(30); }}
-              className={'flex-1 py-5 rounded-2xl text-center transition-all border backdrop-blur ' +
-                (duration === 30
-                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/5'
-                  : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20')}>
+            <button onClick={function() { setDuration(30); }} className={'flex-1 py-5 rounded-2xl text-center transition-all border backdrop-blur ' + (duration === 30 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/5' : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20')}>
               <span className="block text-3xl font-serif">30</span>
               <span className="block text-xs mt-1 opacity-60">minutes</span>
             </button>
           </div>
-          <button onClick={function() { onJoin(role, duration, mood); }}
-            className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/25">
+          <button onClick={function() { onJoin(role, duration, mood); }} className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/25">
             {role === 'seeker' ? 'Find someone' : 'Start listening'}
           </button>
           <p className="text-gray-600 text-xs font-light">Nothing is recorded. Nothing is saved. Just two people, sharing a moment.</p>
@@ -99,8 +88,7 @@ export default function LandingPage({ onJoin }) {
       <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
         <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
-          <button onClick={function() { setStep('role'); setMood(null); }}
-            className="text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
+          <button onClick={function() { setStep('role'); setMood(null); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
           <div className="space-y-3">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
               <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -113,20 +101,14 @@ export default function LandingPage({ onJoin }) {
           <div className="grid grid-cols-2 gap-3">
             {moods.map(function(m) {
               return (
-                <button key={m.value} onClick={function() { setMood(m.value); }}
-                  className={'py-4 px-3 rounded-2xl text-center transition-all border backdrop-blur ' +
-                    (mood === m.value
-                      ? 'bg-emerald-500/10 border-emerald-500/30 shadow-lg shadow-emerald-500/5'
-                      : 'bg-white/[0.03] border-white/[0.08] hover:border-white/20')}>
+                <button key={m.value} onClick={function() { setMood(m.value); }} className={'py-4 px-3 rounded-2xl text-center transition-all border backdrop-blur ' + (mood === m.value ? 'bg-emerald-500/10 border-emerald-500/30 shadow-lg shadow-emerald-500/5' : 'bg-white/[0.03] border-white/[0.08] hover:border-white/20')}>
                   <span className="block text-2xl mb-1">{m.emoji}</span>
                   <span className={'block text-xs font-light ' + (mood === m.value ? 'text-emerald-400' : 'text-gray-400')}>{m.label}</span>
                 </button>
               );
             })}
           </div>
-          <button onClick={function() { setStep('duration'); }}
-            disabled={!mood}
-            className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/25 disabled:opacity-20 disabled:cursor-not-allowed">
+          <button onClick={function() { setStep('duration'); }} disabled={!mood} className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/25 disabled:opacity-20 disabled:cursor-not-allowed">
             Continue
           </button>
         </div>
@@ -134,17 +116,21 @@ export default function LandingPage({ onJoin }) {
     );
   }
 
+  // Main landing (role selection) screen
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-purple-500/3 blur-3xl pointer-events-none" />
+
       <div className="relative z-10 text-center space-y-10 max-w-md w-full">
         <div className="space-y-6">
+          {/* Speech bubbles icon */}
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
             <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
             </svg>
           </div>
+
           <div className="space-y-4">
             <h1 className="text-3xl sm:text-4xl font-serif text-white leading-tight tracking-tight">
               You don't have to go<br />through today alone
@@ -154,6 +140,7 @@ export default function LandingPage({ onJoin }) {
             </p>
           </div>
         </div>
+
         {activeCount > 0 && (
           <div className="flex items-center justify-center gap-2 animate-fade-in">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft shadow-lg shadow-emerald-400/50" />
@@ -162,9 +149,9 @@ export default function LandingPage({ onJoin }) {
             </p>
           </div>
         )}
+
         <div className="space-y-3">
-          <button onClick={function() { setRole('seeker'); setStep('mood'); }}
-            className="w-full py-5 px-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-emerald-500/30 transition-all text-left group backdrop-blur-sm">
+          <button onClick={function() { setRole('seeker'); setStep('mood'); }} className="w-full py-5 px-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-emerald-500/30 transition-all text-left group backdrop-blur-sm">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500/20 group-hover:shadow-lg group-hover:shadow-emerald-500/10 transition-all">
                 <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -180,8 +167,8 @@ export default function LandingPage({ onJoin }) {
               </svg>
             </div>
           </button>
-          <button onClick={function() { setRole('listener'); setStep('duration'); }}
-            className="w-full py-5 px-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-emerald-500/30 transition-all text-left group backdrop-blur-sm">
+
+          <button onClick={function() { setRole('listener'); setStep('duration'); }} className="w-full py-5 px-6 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-emerald-500/30 transition-all text-left group backdrop-blur-sm">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 group-hover:shadow-lg group-hover:shadow-emerald-500/10 transition-all">
                 <svg className="w-5 h-5 text-gray-400 group-hover:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -198,6 +185,7 @@ export default function LandingPage({ onJoin }) {
             </div>
           </button>
         </div>
+
         <div className="space-y-4 pt-2">
           <div className="flex items-center justify-center gap-6">
             <div className="flex items-center gap-1.5">
@@ -219,10 +207,28 @@ export default function LandingPage({ onJoin }) {
               <span className="text-xs text-gray-600 font-light">Nothing saved</span>
             </div>
           </div>
-          <button onClick={function() { setShowPromise(true); }}
-            className="text-xs text-gray-600 hover:text-emerald-400 transition-colors font-light">
-            Our community promise
-          </button>
+
+          <div className="flex items-center justify-center gap-4">
+            <button onClick={function() { setShowPromise(true); }} className="text-xs text-gray-600 hover:text-emerald-400 transition-colors font-light">
+              Our community promise
+            </button>
+            {!pushEnabled && (
+              <button onClick={function() { onSubscribePush('listener'); }} className="flex items-center gap-1 text-xs text-gray-600 hover:text-emerald-400 transition-colors font-light">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                </svg>
+                Get notified
+              </button>
+            )}
+            {pushEnabled && (
+              <span className="flex items-center gap-1 text-xs text-emerald-500/60 font-light">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                Notifications on
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
