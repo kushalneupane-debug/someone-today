@@ -55,11 +55,13 @@ function notifyListeners() {
 var lastDiscordNotify = 0;
 
 function notifyDiscord() {
+  console.log('[DISCORD] >>> notifyDiscord() called!');
   var webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) {
     console.log('[DISCORD] No webhook URL configured');
     return;
   }
+  console.log('[DISCORD] Webhook URL exists: true');
 
   var now = Date.now();
   if (now - lastDiscordNotify < 15000) {
@@ -68,8 +70,7 @@ function notifyDiscord() {
   }
   lastDiscordNotify = now;
 
-  var msg = ':rotating_light: **Someone needs help!**\nA seeker is waiting on Someone Today and no listeners are online.\n:point_right: https://someone-today.onrender.com';
-  var body = JSON.stringify({ content: msg });
+  var body = JSON.stringify({ content: '**Someone needs help!** A seeker is waiting on Someone Today and no listeners are online. https://someone-today.onrender.com' });
 
   try {
     var parsed = new URL(webhookUrl);
@@ -82,14 +83,22 @@ function notifyDiscord() {
         'Content-Length': Buffer.byteLength(body)
       }
     };
+
     var req = https.request(options, function(res) {
-      console.log('[DISCORD] Webhook sent, status: ' + res.statusCode);
+      var responseData = '';
+      res.on('data', function(chunk) { responseData += chunk; });
+      res.on('end', function() {
+        console.log('[DISCORD] Webhook response - status: ' + res.statusCode + ' body: ' + responseData);
+      });
     });
+
     req.on('error', function(err) {
       console.log('[DISCORD] Webhook error: ' + err.message);
     });
+
     req.write(body);
     req.end();
+    console.log('[DISCORD] Webhook request sent');
   } catch (err) {
     console.log('[DISCORD] Invalid webhook URL: ' + err.message);
   }
