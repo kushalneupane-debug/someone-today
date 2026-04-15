@@ -62,8 +62,8 @@ function notifyDiscord() {
   }
 
   var now = Date.now();
-  if (now - lastDiscordNotify < 60000) {
-    console.log('[DISCORD] Rate limited (60s cooldown)');
+  if (now - lastDiscordNotify < 15000) {
+    console.log('[DISCORD] Rate limited (15s cooldown)');
     return;
   }
   lastDiscordNotify = now;

@@ -96,12 +96,19 @@ io.on('connection', function(socket) {
     if (match) {
       startMatch(match);
     } else if (role === 'seeker') {
-      var counts = getQueueCounts();
-      if (counts.listeners === 0) {
-        socket.emit('no-listeners');
-        push.notifyListeners();
-        push.notifyDiscord();
-      }
+      // FIX 1: Always notify when no match found
+      socket.emit('no-listeners');
+      push.notifyListeners();
+      push.notifyDiscord();
+
+      // FIX 3: Retry Discord notification after 2 min
+      setTimeout(function() {
+        var counts = getQueueCounts();
+        if (counts.seekers > 0 && counts.listeners === 0) {
+          console.log('[DISCORD] Retry: seeker still waiting after 2 minutes');
+          push.notifyDiscord();
+        }
+      }, 120000);
     }
   });
 
