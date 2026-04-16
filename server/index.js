@@ -286,8 +286,30 @@ function handleSessionEnd(session, reason) {
 }
 
 app.get('/api/test-telegram', function(req, res) {
-  sendTelegramNotification('test-endpoint');
-  res.json({ ok: true, message: 'Telegram notification sent! Check your phone.' });
+  var botToken = process.env.TELEGRAM_BOT_TOKEN;
+  var chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!botToken || !chatId) {
+    return res.json({ ok: false, error: 'Missing env vars', hasBotToken: Boolean(botToken), hasChatId: Boolean(chatId) });
+  }
+  var text = 'Test notification - Someone Today is working';
+  var body = JSON.stringify({ chat_id: chatId, text: text });
+  var options = {
+    hostname: 'api.telegram.org',
+    path: '/bot' + botToken + '/sendMessage',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+  };
+  var r = require('https').request(options, function(resp) {
+    var d = '';
+    resp.on('data', function(c) { d += c; });
+    resp.on('end', function() {
+      res.json({ ok: resp.statusCode === 200, statusCode: resp.statusCode, telegram: JSON.parse(d) });
+    });
+  });
+  r.on('error', function(e) { res.json({ ok: false, error: e.message }); });
+  r.write(body);
+  r.end();
+});
 });
 
 app.get('*', function(req, res) {
