@@ -74,8 +74,8 @@ var lastTelegramNotify = 0;
 
 function sendTelegramNotification(reason) {
   console.log('[TELEGRAM] sendTelegramNotification called - reason: ' + reason);
-  var botToken = process.env.TELEGRAM_BOT_TOKEN || '8259330276:AAGun2gDmSTa2LBRyMOhgNtZ8LUSZ0kweiE';
-  var chatId = process.env.TELEGRAM_CHAT_ID || '8239986118';
+  var botToken = process.env.TELEGRAM_BOT_TOKEN;
+  var chatId = process.env.TELEGRAM_CHAT_ID;
   if (!botToken || !chatId) {
     console.log('[TELEGRAM] ERROR: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set');
     return;
