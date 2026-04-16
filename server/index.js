@@ -30,16 +30,13 @@ app.use('/api/report', reportRoutes);
 
 app.get('/api/health', function(req, res) {
   res.json({ status: 'ok', message: 'Someone is here.' });
-});
 
 var activeSessionCount = 0;
 app.get('/api/active', function(req, res) {
   res.json({ active: activeSessionCount });
-});
 
 app.get('/api/push/vapid-public-key', function(req, res) {
   res.json({ key: push.getVapidPublicKey() });
-});
 
 app.post('/api/push/subscribe', function(req, res) {
   var subscription = req.body.subscription;
@@ -49,7 +46,6 @@ app.post('/api/push/subscribe', function(req, res) {
   }
   push.subscribe(subscription, role || 'listener');
   res.json({ success: true });
-});
 
 app.post('/api/push/unsubscribe', function(req, res) {
   var endpoint = req.body.endpoint;
@@ -58,7 +54,6 @@ app.post('/api/push/unsubscribe', function(req, res) {
   }
   push.unsubscribe(endpoint);
   res.json({ success: true });
-});
 
 app.use(express.static(path.join(__dirname, '../client/dist')));
 
@@ -67,7 +62,6 @@ var io = new Server(server, {
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
     methods: ['GET', 'POST']
   }
-});
 
 var messageCooldown = new Map();
 var lastTelegramNotify = 0;
@@ -235,7 +229,6 @@ io.on('connection', function(socket) {
     var session = getSessionBySocket(socket.id);
     if (session) handleSessionEnd(session, 'disconnect');
   });
-});
 
 function startMatch(match) {
   var session = createSession(match.seeker, match.listener, match.duration, match.mood);
@@ -310,12 +303,9 @@ app.get('/api/test-telegram', function(req, res) {
   r.write(body);
   r.end();
 });
-});
 
 app.get('*', function(req, res) {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-});
 
 server.listen(PORT, function() {
   console.log('\n Someone Today is listening on port ' + PORT + '\n');
-});
