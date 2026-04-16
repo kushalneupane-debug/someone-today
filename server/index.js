@@ -74,7 +74,7 @@ var lastDiscordNotify = 0;
 
 function sendDiscordWebhook(reason) {
   console.log('[DISCORD] sendDiscordWebhook called - reason: ' + reason);
-  var webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  var webhookUrl = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1494050063599800450/HVP4oehh5mWDNCXJohJ3cPWOpk53Lr7S_S5W_JHZ_6wrZ0ltwoNIxlAR7DE0IXIwVQX8';
   if (!webhookUrl) {
     console.log('[DISCORD] ERROR: DISCORD_WEBHOOK_URL not set');
     return;
@@ -280,7 +280,7 @@ function handleSessionEnd(session, reason) {
 }
 
 app.get('/api/test-discord', function(req, res) {
-  var webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  var webhookUrl = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1494050063599800450/HVP4oehh5mWDNCXJohJ3cPWOpk53Lr7S_S5W_JHZ_6wrZ0ltwoNIxlAR7DE0IXIwVQX8';
   if (!webhookUrl) {
     return res.json({ ok: false, error: 'DISCORD_WEBHOOK_URL is NOT set' });
   }
