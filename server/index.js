@@ -132,8 +132,8 @@ io.on('connection', function(socket) {
     } else if (role === 'seeker') {
       console.log('[SEEKER] No match - sending Discord webhook NOW');
       socket.emit('no-listeners');
-      push.notifyListeners();
       sendDiscordWebhook('seeker-no-match');
+      try { push.notifyListeners(); } catch(e) { console.log('[PUSH] notifyListeners error: ' + e.message); }
 
       setTimeout(function() {
         var counts = getQueueCounts();
