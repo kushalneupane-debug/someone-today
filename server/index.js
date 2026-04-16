@@ -1,5 +1,6 @@
 var express = require('express');
 var http = require('http');
+var https = require('https');
 var path = require('path');
 var Server = require('socket.io').Server;
 var cors = require('cors');
@@ -36,7 +37,6 @@ app.get('/api/active', function(req, res) {
   res.json({ active: activeSessionCount });
 });
 
-// Push notification routes
 app.get('/api/push/vapid-public-key', function(req, res) {
   res.json({ key: push.getVapidPublicKey() });
 });
@@ -70,6 +70,40 @@ var io = new Server(server, {
 });
 
 var messageCooldown = new Map();
+var lastDiscordNotify = 0;
+
+function sendDiscordWebhook(reason) {
+  console.log('[DISCORD] sendDiscordWebhook called - reason: ' + reason);
+  var webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhookUrl) {
+    console.log('[DISCORD] ERROR: DISCORD_WEBHOOK_URL not set');
+    return;
+  }
+  var now = Date.now();
+  if (now - lastDiscordNotify < 15000) {
+    console.log('[DISCORD] Skipped - 15s cooldown');
+    return;
+  }
+  lastDiscordNotify = now;
+  var body = JSON.stringify({ content: '**Someone needs help!** A seeker is waiting on Someone Today and no listeners are online. https://someone-today.onrender.com' });
+  try {
+    var parsed = new URL(webhookUrl);
+    var options = { hostname: parsed.hostname, path: parsed.pathname + parsed.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } };
+    var r = https.request(options, function(resp) {
+      var d = '';
+      resp.on('data', function(c) { d += c; });
+      resp.on('end', function() {
+        console.log('[DISCORD] status: ' + resp.statusCode + ' body: ' + d);
+      });
+    });
+    r.on('error', function(e) { console.log('[DISCORD] error: ' + e.message); });
+    r.write(body);
+    r.end();
+    console.log('[DISCORD] Request sent (' + reason + ')');
+  } catch(e) {
+    console.log('[DISCORD] Failed: ' + e.message);
+  }
+}
 
 io.on('connection', function(socket) {
   console.log('[CONNECT] ' + socket.id);
@@ -96,17 +130,16 @@ io.on('connection', function(socket) {
     if (match) {
       startMatch(match);
     } else if (role === 'seeker') {
-      // FIX 1: Always notify when no match found
+      console.log('[SEEKER] No match - sending Discord webhook NOW');
       socket.emit('no-listeners');
       push.notifyListeners();
-      push.notifyDiscord();
+      sendDiscordWebhook('seeker-no-match');
 
-      // FIX 3: Retry Discord notification after 2 min
       setTimeout(function() {
         var counts = getQueueCounts();
         if (counts.seekers > 0 && counts.listeners === 0) {
-          console.log('[DISCORD] Retry: seeker still waiting after 2 minutes');
-          push.notifyDiscord();
+          console.log('[SEEKER] Still waiting after 2 min - retrying');
+          sendDiscordWebhook('seeker-retry-2min');
         }
       }, 120000);
     }
@@ -115,15 +148,12 @@ io.on('connection', function(socket) {
   socket.on('send-message', function(data) {
     var session = getSessionBySocket(socket.id);
     if (!session) return;
-
     var now = Date.now();
     var last = messageCooldown.get(socket.id) || 0;
     if (now - last < 500) return;
     messageCooldown.set(socket.id, now);
-
     var safeText = (data.text || '').trim().slice(0, 500);
     if (!safeText) return;
-
     io.to(session.roomId).emit('new-message', {
       from: socket.id === session.seeker ? 'seeker' : 'listener',
       text: safeText,
@@ -160,16 +190,13 @@ io.on('connection', function(socket) {
     if (!session) return;
     if (session.extended) return;
     if (!session.extensionRequester) return;
-
     if (data.accepted) {
       var updated = extendSession(session.roomId, 5, function(endedSession) {
         console.log('[TIMER] Session ' + endedSession.roomId + ' ended');
         handleSessionEnd(endedSession, 'time-expired');
       });
       if (updated) {
-        io.to(session.roomId).emit('extension-accepted', {
-          newEndsAt: updated.endsAt
-        });
+        io.to(session.roomId).emit('extension-accepted', { newEndsAt: updated.endsAt });
         console.log('[EXTEND] Extension accepted for ' + session.roomId);
       }
     } else {
@@ -206,21 +233,17 @@ io.on('connection', function(socket) {
 
 function startMatch(match) {
   var session = createSession(match.seeker, match.listener, match.duration, match.mood);
-
   var seekerSocket = io.sockets.sockets.get(match.seeker);
   var listenerSocket = io.sockets.sockets.get(match.listener);
-
   if (!seekerSocket || !listenerSocket) {
     endSession(session.roomId);
     markSessionEnded(match.seeker);
     markSessionEnded(match.listener);
     return;
   }
-
   seekerSocket.join(session.roomId);
   listenerSocket.join(session.roomId);
   activeSessionCount++;
-
   io.to(session.roomId).emit('matched', {
     roomId: session.roomId,
     duration: session.duration,
@@ -228,10 +251,8 @@ function startMatch(match) {
     endsAt: session.endsAt,
     mood: session.mood
   });
-
   console.log('[MATCH] ' + match.seeker + ' <-> ' + match.listener + ' for ' + match.duration + ' min');
   console.log('[ACTIVE SESSIONS] ' + activeSessionCount);
-
   startSessionTimer(session.roomId, function(endedSession) {
     console.log('[TIMER] Session ' + endedSession.roomId + ' ended');
     handleSessionEnd(endedSession, 'time-expired');
@@ -241,56 +262,30 @@ function startMatch(match) {
 function handleSessionEnd(session, reason) {
   var ended = endSession(session.roomId);
   if (!ended) return;
-
   activeSessionCount = Math.max(0, activeSessionCount - 1);
   markSessionEnded(session.seeker);
   markSessionEnded(session.listener);
   messageCooldown.delete(session.seeker);
   messageCooldown.delete(session.listener);
-
   var message =
     reason === 'time-expired' ? 'Your time together has ended. Thank you for being here.' :
     reason === 'step-away' ? 'The other person has stepped away. Thank you for being here.' :
     'The session has ended.';
-
-  io.to(session.roomId).emit('session-ended', {
-    reason: reason,
-    message: message
-  });
-
+  io.to(session.roomId).emit('session-ended', { reason: reason, message: message });
   var seekerSocket = io.sockets.sockets.get(session.seeker);
   var listenerSocket = io.sockets.sockets.get(session.listener);
   if (seekerSocket) seekerSocket.leave(session.roomId);
   if (listenerSocket) listenerSocket.leave(session.roomId);
-
   console.log('[ACTIVE SESSIONS] ' + activeSessionCount);
 }
-
 
 app.get('/api/test-discord', function(req, res) {
   var webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) {
-    return res.json({ ok: false, error: 'DISCORD_WEBHOOK_URL is NOT set in environment' });
+    return res.json({ ok: false, error: 'DISCORD_WEBHOOK_URL is NOT set' });
   }
-  var https = require('https');
-  var body = JSON.stringify({ content: '**Test from Someone Today!** Your Discord webhook is working.' });
-  try {
-    var parsed = new URL(webhookUrl);
-    var options = { hostname: parsed.hostname, path: parsed.pathname + parsed.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } };
-    var r = https.request(options, function(resp) {
-      var d = '';
-      resp.on('data', function(c) { d += c; });
-      resp.on('end', function() {
-        console.log('[DISCORD TEST] status: ' + resp.statusCode + ' body: ' + d);
-      });
-    });
-    r.on('error', function(e) { console.log('[DISCORD TEST] error: ' + e.message); });
-    r.write(body);
-    r.end();
-    res.json({ ok: true, message: 'Webhook fired! Check your Discord channel.', urlPrefix: webhookUrl.substring(0, 45) + '...' });
-  } catch(e) {
-    res.json({ ok: false, error: e.message });
-  }
+  sendDiscordWebhook('test-endpoint');
+  res.json({ ok: true, message: 'Webhook fired! Check Discord.' });
 });
 
 app.get('*', function(req, res) {
