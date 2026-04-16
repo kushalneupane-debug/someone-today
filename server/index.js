@@ -70,38 +70,44 @@ var io = new Server(server, {
 });
 
 var messageCooldown = new Map();
-var lastDiscordNotify = 0;
+var lastTelegramNotify = 0;
 
-function sendDiscordWebhook(reason) {
-  console.log('[DISCORD] sendDiscordWebhook called - reason: ' + reason);
-  var webhookUrl = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1494421925953540218/RjUwbZWVv7tqwRKGIxwaU6659r-JIY2oeojEx5if_MgZlyvNIcfwOTxPxeZEoEBp1939';
-  if (!webhookUrl) {
-    console.log('[DISCORD] ERROR: DISCORD_WEBHOOK_URL not set');
+function sendTelegramNotification(reason) {
+  console.log('[TELEGRAM] sendTelegramNotification called - reason: ' + reason);
+  var botToken = process.env.TELEGRAM_BOT_TOKEN || '8259330276:AAGun2gDmSTa2LBRyMOhgNtZ8LUSZ0kweiE';
+  var chatId = process.env.TELEGRAM_CHAT_ID || '8239986118';
+  if (!botToken || !chatId) {
+    console.log('[TELEGRAM] ERROR: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set');
     return;
   }
   var now = Date.now();
-  if (now - lastDiscordNotify < 15000) {
-    console.log('[DISCORD] Skipped - 15s cooldown');
+  if (now - lastTelegramNotify < 15000) {
+    console.log('[TELEGRAM] Skipped - 15s cooldown');
     return;
   }
-  lastDiscordNotify = now;
-  var body = JSON.stringify({ content: '**Someone needs help!** A seeker is waiting on Someone Today and no listeners are online. https://someone-today.onrender.com' });
+  lastTelegramNotify = now;
+  var text = '🚨 Someone needs help!\nA seeker is waiting on Someone Today and no listeners are online.\n👉 https://someone-today.onrender.com';
+  var body = JSON.stringify({ chat_id: chatId, text: text });
   try {
-    var parsed = new URL(webhookUrl);
-    var options = { hostname: parsed.hostname, path: parsed.pathname + parsed.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } };
+    var options = {
+      hostname: 'api.telegram.org',
+      path: '/bot' + botToken + '/sendMessage',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    };
     var r = https.request(options, function(resp) {
       var d = '';
       resp.on('data', function(c) { d += c; });
       resp.on('end', function() {
-        console.log('[DISCORD] status: ' + resp.statusCode + ' body: ' + d);
+        console.log('[TELEGRAM] status: ' + resp.statusCode + ' body: ' + d);
       });
     });
-    r.on('error', function(e) { console.log('[DISCORD] error: ' + e.message); });
+    r.on('error', function(e) { console.log('[TELEGRAM] error: ' + e.message); });
     r.write(body);
     r.end();
-    console.log('[DISCORD] Request sent (' + reason + ')');
+    console.log('[TELEGRAM] Request sent (' + reason + ')');
   } catch(e) {
-    console.log('[DISCORD] Failed: ' + e.message);
+    console.log('[TELEGRAM] Failed: ' + e.message);
   }
 }
 
@@ -130,16 +136,16 @@ io.on('connection', function(socket) {
     if (match) {
       startMatch(match);
     } else if (role === 'seeker') {
-      console.log('[SEEKER] No match - sending Discord webhook NOW');
+      console.log('[SEEKER] No match - sending Telegram notification NOW');
       socket.emit('no-listeners');
-      sendDiscordWebhook('seeker-no-match');
+      sendTelegramNotification('seeker-no-match');
       try { push.notifyListeners(); } catch(e) { console.log('[PUSH] notifyListeners error: ' + e.message); }
 
       setTimeout(function() {
         var counts = getQueueCounts();
         if (counts.seekers > 0 && counts.listeners === 0) {
           console.log('[SEEKER] Still waiting after 2 min - retrying');
-          sendDiscordWebhook('seeker-retry-2min');
+          sendTelegramNotification('seeker-retry-2min');
         }
       }, 120000);
     }
@@ -279,13 +285,9 @@ function handleSessionEnd(session, reason) {
   console.log('[ACTIVE SESSIONS] ' + activeSessionCount);
 }
 
-app.get('/api/test-discord', function(req, res) {
-  var webhookUrl = process.env.DISCORD_WEBHOOK_URL || 'https://discord.com/api/webhooks/1494421925953540218/RjUwbZWVv7tqwRKGIxwaU6659r-JIY2oeojEx5if_MgZlyvNIcfwOTxPxeZEoEBp1939';
-  if (!webhookUrl) {
-    return res.json({ ok: false, error: 'DISCORD_WEBHOOK_URL is NOT set' });
-  }
-  sendDiscordWebhook('test-endpoint');
-  res.json({ ok: true, message: 'Webhook fired! Check Discord.' });
+app.get('/api/test-telegram', function(req, res) {
+  sendTelegramNotification('test-endpoint');
+  res.json({ ok: true, message: 'Telegram notification sent! Check your phone.' });
 });
 
 app.get('*', function(req, res) {
