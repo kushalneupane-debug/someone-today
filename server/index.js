@@ -86,7 +86,7 @@ function sendTelegramNotification(reason) {
     return;
   }
   lastTelegramNotify = now;
-  var text = '🚨 Someone needs help!\nA seeker is waiting on Someone Today and no listeners are online.\n👉 https://someone-today.onrender.com';
+  var text = '🚨 Someone needs help!\nA seeker is waiting on Someone Today and no listeners are online.\n👉 https://getsomeonetoday.com';
   var body = JSON.stringify({ chat_id: chatId, text: text });
   try {
     var options = {
