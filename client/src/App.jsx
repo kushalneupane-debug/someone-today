@@ -6,6 +6,8 @@ import ChatInterface from './components/ChatInterface';
 import SessionEnded from './components/SessionEnded';
 import CommunityPromise from './components/CommunityPromise';
 import CrisisRedirection from './components/CrisisRedirection';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
@@ -18,6 +20,8 @@ function App() {
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [showPromise, setShowPromise] = useState(false);
   const [showCrisis, setShowCrisis] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const [mood, setMood] = useState(null);
   const [noListeners, setNoListeners] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -36,9 +40,7 @@ function App() {
     var socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
-    socket.on('waiting', function() {
-      setScreen('waiting');
-    });
+    socket.on('waiting', function() { setScreen('waiting'); });
 
     socket.on('matched', function(data) {
       setRoomId(data.roomId);
@@ -61,25 +63,11 @@ function App() {
       setPartnerTyping(false);
     });
 
-    socket.on('user-typing', function() {
-      setPartnerTyping(true);
-    });
-
-    socket.on('user-stopped-typing', function() {
-      setPartnerTyping(false);
-    });
-
-    socket.on('session-ended', function() {
-      setScreen('ended');
-    });
-
-    socket.on('no-listeners', function() {
-      setNoListeners(true);
-    });
-
-    socket.on('extension-requested', function() {
-      setExtensionIncoming(true);
-    });
+    socket.on('user-typing', function() { setPartnerTyping(true); });
+    socket.on('user-stopped-typing', function() { setPartnerTyping(false); });
+    socket.on('session-ended', function() { setScreen('ended'); });
+    socket.on('no-listeners', function() { setNoListeners(true); });
+    socket.on('extension-requested', function() { setExtensionIncoming(true); });
 
     socket.on('extension-accepted', function(data) {
       setEndsAt(data.newEndsAt);
@@ -90,9 +78,7 @@ function App() {
       setTimeout(function() { setExtensionConfirmed(false); }, 3000);
     });
 
-    socket.on('extension-declined', function() {
-      setExtensionRequested(false);
-    });
+    socket.on('extension-declined', function() { setExtensionRequested(false); });
 
     return function() { socket.disconnect(); };
   }, []);
@@ -125,18 +111,12 @@ function App() {
     setMood(selectedMood || null);
     setNoListeners(false);
     if (socketRef.current) {
-      socketRef.current.emit('join-queue', {
-        role: selectedRole,
-        duration: duration,
-        mood: selectedMood || null
-      });
+      socketRef.current.emit('join-queue', { role: selectedRole, duration: duration, mood: selectedMood || null });
     }
   };
 
   var sendMessage = function(text) {
-    if (socketRef.current) {
-      socketRef.current.emit('send-message', { text: text });
-    }
+    if (socketRef.current) socketRef.current.emit('send-message', { text: text });
   };
 
   var emitTyping = function() {
@@ -186,6 +166,12 @@ function App() {
   if (showPromise) {
     return <CommunityPromise onBack={function() { setShowPromise(false); }} />;
   }
+  if (showPrivacy) {
+    return <PrivacyPolicy onBack={function() { setShowPrivacy(false); }} />;
+  }
+  if (showTerms) {
+    return <TermsOfService onBack={function() { setShowTerms(false); }} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
@@ -194,6 +180,8 @@ function App() {
           onJoin={joinQueue}
           onShowPromise={function() { setShowPromise(true); }}
           onShowCrisis={function() { setShowCrisis(true); }}
+          onShowPrivacy={function() { setShowPrivacy(true); }}
+          onShowTerms={function() { setShowTerms(true); }}
           onSubscribePush={subscribeToPush}
           pushEnabled={pushEnabled}
         />

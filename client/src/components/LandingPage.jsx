@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react';
 import CommunityPromise from './CommunityPromise';
 
 var moods = [
-  { emoji: '\uD83D\uDE14', label: 'Feeling down', value: 'down' },
-  { emoji: '\uD83D\uDE30', label: 'Feeling anxious', value: 'anxious' },
-  { emoji: '\uD83E\uDEC2', label: 'Feeling lonely', value: 'lonely' },
-  { emoji: '\uD83D\uDE2E\u200D\uD83D\uDCA8', label: 'Overwhelmed', value: 'overwhelmed' },
-  { emoji: '\uD83D\uDCAD', label: 'Just want to talk', value: 'talk' },
-  { emoji: '\uD83E\uDD10', label: 'Rather not say', value: 'unspecified' }
+  { emoji: '😔', label: 'Feeling down', value: 'down' },
+  { emoji: '😰', label: 'Feeling anxious', value: 'anxious' },
+  { emoji: '🫂', label: 'Feeling lonely', value: 'lonely' },
+  { emoji: '😮‍💨', label: 'Overwhelmed', value: 'overwhelmed' },
+  { emoji: '💭', label: 'Just want to talk', value: 'talk' },
+  { emoji: '🤐', label: 'Rather not say', value: 'unspecified' }
 ];
 
-export default function LandingPage({ onJoin, pushEnabled, onSubscribePush }) {
+export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onShowPrivacy, onShowTerms }) {
   var _step = useState('role');
   var step = _step[0]; var setStep = _step[1];
   var _role = useState(null);
@@ -44,7 +44,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush }) {
         <div className="bg-white/5 backdrop-blur rounded-2xl p-8 border border-white/10 max-w-sm">
           <CommunityPromise />
         </div>
-        <button onClick={function() { setShowPromise(false); }} className="mt-6 text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
+        <button onClick={function() { setShowPromise(false); }} className="mt-6 text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
       </div>
     );
   }
@@ -54,7 +54,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush }) {
       <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
         <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
-          <button onClick={function() { setStep(role === 'seeker' ? 'mood' : 'role'); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
+          <button onClick={function() { setStep(role === 'seeker' ? 'mood' : 'role'); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
           <div className="space-y-3">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
               <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -88,7 +88,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush }) {
       <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
         <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
-          <button onClick={function() { setStep('role'); setMood(null); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">{'\u2190'} Back</button>
+          <button onClick={function() { setStep('role'); setMood(null); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
           <div className="space-y-3">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
               <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -116,7 +116,6 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush }) {
     );
   }
 
-  // Main landing (role selection) screen
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
@@ -124,13 +123,11 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush }) {
 
       <div className="relative z-10 text-center space-y-10 max-w-md w-full">
         <div className="space-y-6">
-          {/* Speech bubbles icon */}
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
             <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
             </svg>
           </div>
-
           <div className="space-y-4">
             <h1 className="text-3xl sm:text-4xl font-serif text-white leading-tight tracking-tight">
               You don't have to go<br />through today alone
@@ -228,6 +225,28 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush }) {
                 Notifications on
               </span>
             )}
+          </div>
+
+          {/* Crisis Banner */}
+          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-3.5 max-w-sm mx-auto">
+            <p className="text-gray-500 text-xs font-light leading-relaxed text-center">
+              <span className="mr-1">💛</span>
+              Someone Today is a peer support platform, not a crisis service. If you're in immediate danger, please call{' '}
+              <a href="tel:988" className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium">988</a>
+              {' '}or text HOME to{' '}
+              <a href="sms:741741&body=HOME" className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium">741741</a>.
+            </p>
+          </div>
+
+          {/* Footer links */}
+          <div className="flex items-center justify-center gap-3 pt-1">
+            <button onClick={onShowPrivacy} className="text-[11px] text-gray-600 hover:text-gray-400 transition-colors font-light">
+              Privacy Policy
+            </button>
+            <span className="text-gray-700 text-[11px]">·</span>
+            <button onClick={onShowTerms} className="text-[11px] text-gray-600 hover:text-gray-400 transition-colors font-light">
+              Terms of Service
+            </button>
           </div>
         </div>
       </div>
