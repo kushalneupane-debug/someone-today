@@ -17,7 +17,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   var role = _role[0]; var setRole = _role[1];
   var _duration = useState(15);
   var duration = _duration[0]; var setDuration = _duration[1];
-  var _mood = useState(null);
+  var _mood = useState([]);
   var mood = _mood[0]; var setMood = _mood[1];
   var _active = useState(0);
   var activeCount = _active[0]; var setActiveCount = _active[1];
@@ -61,8 +61,8 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-serif text-white">How long feels right?</h2>
-            <p className="text-gray-500 text-sm font-light">You can always step away earlier.</p>
+            <h2 className="text-2xl font-serif text-white">How long would you like to chat?</h2>
+            <p className="text-gray-500 text-sm font-light">Pick a session length. You can always leave early — no pressure.</p>
           </div>
           <div className="flex gap-3">
             <button onClick={function() { setDuration(15); }} className={'flex-1 py-5 rounded-2xl text-center transition-all border backdrop-blur ' + (duration === 15 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/5' : 'bg-white/5 border-white/10 text-gray-400 hover:border-white/20')}>
@@ -88,7 +88,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
         <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
-          <button onClick={function() { setStep('role'); setMood(null); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
+          <button onClick={function() { setStep('role'); setMood([]); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
           <div className="space-y-3">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
               <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -96,19 +96,19 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
               </svg>
             </div>
             <h2 className="text-2xl font-serif text-white">How are you feeling?</h2>
-            <p className="text-gray-500 text-sm font-light">This helps your listener understand where you are. No pressure.</p>
+            <p className="text-gray-500 text-sm font-light">Select all that apply. This helps your listener understand where you are.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {moods.map(function(m) {
               return (
-                <button key={m.value} onClick={function() { setMood(m.value); }} className={'py-4 px-3 rounded-2xl text-center transition-all border backdrop-blur ' + (mood === m.value ? 'bg-emerald-500/10 border-emerald-500/30 shadow-lg shadow-emerald-500/5' : 'bg-white/[0.03] border-white/[0.08] hover:border-white/20')}>
+                <button key={m.value} onClick={function() { setMood(function(prev) { return prev.includes(m.value) ? prev.filter(function(x) { return x !== m.value; }) : prev.concat([m.value]); }); }} className={'py-4 px-3 rounded-2xl text-center transition-all border backdrop-blur ' + (mood.includes(m.value) ? 'bg-emerald-500/10 border-emerald-500/30 shadow-lg shadow-emerald-500/5' : 'bg-white/[0.03] border-white/[0.08] hover:border-white/20')}>
                   <span className="block text-2xl mb-1">{m.emoji}</span>
-                  <span className={'block text-xs font-light ' + (mood === m.value ? 'text-emerald-400' : 'text-gray-400')}>{m.label}</span>
+                  <span className={'block text-xs font-light ' + (mood.includes(m.value) ? 'text-emerald-400' : 'text-gray-400')}>{m.label}</span>
                 </button>
               );
             })}
           </div>
-          <button onClick={function() { setStep('duration'); }} disabled={!mood} className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/25 disabled:opacity-20 disabled:cursor-not-allowed">
+          <button onClick={function() { setStep('duration'); }} disabled={mood.length === 0} className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-400 transition-all active:scale-[0.98] shadow-lg shadow-emerald-500/25 disabled:opacity-20 disabled:cursor-not-allowed">
             Continue
           </button>
         </div>

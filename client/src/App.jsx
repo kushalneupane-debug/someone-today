@@ -22,7 +22,7 @@ function App() {
   const [showCrisis, setShowCrisis] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const [mood, setMood] = useState(null);
+  const [mood, setMood] = useState([]);
   const [noListeners, setNoListeners] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [extensionRequested, setExtensionRequested] = useState(false);
@@ -108,10 +108,10 @@ function App() {
 
   var joinQueue = function(selectedRole, duration, selectedMood) {
     setRole(selectedRole);
-    setMood(selectedMood || null);
+    setMood(selectedMood || []);
     setNoListeners(false);
     if (socketRef.current) {
-      socketRef.current.emit('join-queue', { role: selectedRole, duration: duration, mood: selectedMood || null });
+      socketRef.current.emit('join-queue', { role: selectedRole, duration: duration, mood: selectedMood || [] });
     }
   };
 
@@ -152,7 +152,7 @@ function App() {
     setEndsAt(null);
     setRoomId(null);
     setPartnerTyping(false);
-    setMood(null);
+    setMood([]);
     setNoListeners(false);
     setExtensionRequested(false);
     setExtensionIncoming(false);
