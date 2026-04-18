@@ -32,6 +32,8 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   var showPromise = _promise[0]; var setShowPromise = _promise[1];
   var _ti = useState(0);
   var testimonialIndex = _ti[0]; var setTestimonialIndex = _ti[1];
+  var _matching = useState(false);
+  var isMatching = _matching[0]; var setIsMatching = _matching[1];
 
   useEffect(function() {
     fetch('/api/active')
@@ -105,6 +107,33 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
             {role === 'seeker' ? 'Find someone' : 'Start listening'}
           </button>
           <p className="text-gray-500 text-sm font-light">Nothing is recorded. Nothing is saved. Just two people, sharing a moment.</p>
+        </div>
+      </div>
+    );
+  }
+
+    if (isMatching) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-slide-up relative overflow-hidden">
+        <div className="hero-glow"></div>
+        <div className="relative z-10 text-center space-y-8">
+          <div className="relative w-24 h-24 mx-auto">
+            <div className="absolute inset-0 rounded-full border-2 border-emerald-500/30 match-ring"></div>
+            <div className="absolute inset-3 rounded-full border border-emerald-500/20 match-ring" style={{animationDelay: "0.5s"}}></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <h2 className="text-2xl sm:text-3xl font-serif text-white">Looking for someone</h2>
+            <div className="flex gap-2 justify-center">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 match-dot-1"></div>
+              <div className="w-2 h-2 rounded-full bg-emerald-400 match-dot-2"></div>
+              <div className="w-2 h-2 rounded-full bg-emerald-400 match-dot-3"></div>
+            </div>
+            <p className="text-gray-400 text-base font-light">Connecting you with a real person who cares</p>
+          </div>
+          <button onClick={function() { setIsMatching(false); setStep("landing"); }} className="text-gray-500 hover:text-white text-sm transition-colors">Cancel</button>
         </div>
       </div>
     );
@@ -243,6 +272,11 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
               <span className="text-sm text-gray-400 font-light">Nothing saved</span>
             </div>
           </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 scroll-arrow">
+          <svg className="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7" /></svg>
         </div>
       </section>
 
