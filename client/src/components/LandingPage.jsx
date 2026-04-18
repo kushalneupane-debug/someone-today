@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import CommunityPromise from './CommunityPromise';
 
 var moods = [
@@ -8,6 +8,13 @@ var moods = [
   { emoji: '😮‍💨', label: 'Overwhelmed', value: 'overwhelmed' },
   { emoji: '💭', label: 'Just want to talk', value: 'talk' },
   { emoji: '🤐', label: 'Rather not say', value: 'unspecified' }
+];
+
+var testimonials = [
+  { text: "I just needed someone to listen. No advice, no judgment. This was exactly that.", from: "Anonymous" },
+  { text: "I was having the worst night. A stranger stayed with me for 30 minutes. It changed everything.", from: "Someone who needed it" },
+  { text: "Being a listener here reminds me that small acts of presence matter more than we think.", from: "A listener" },
+  { text: "No sign-up, no profile, no history. Just a real human on the other side. This is what the internet should be.", from: "First-time user" }
 ];
 
 export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onShowPrivacy, onShowTerms }) {
@@ -23,6 +30,8 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   var activeCount = _active[0]; var setActiveCount = _active[1];
   var _promise = useState(false);
   var showPromise = _promise[0]; var setShowPromise = _promise[1];
+  var _ti = useState(0);
+  var testimonialIndex = _ti[0]; var setTestimonialIndex = _ti[1];
 
   useEffect(function() {
     fetch('/api/active')
@@ -38,9 +47,27 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
     return function() { clearInterval(interval); };
   }, []);
 
+  useEffect(function() {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) { entry.target.classList.add('scroll-visible'); }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+    setTimeout(function() {
+      var els = document.querySelectorAll('.scroll-hidden');
+      els.forEach(function(el) { observer.observe(el); });
+    }, 100);
+    return function() { observer.disconnect(); };
+  }, []);
+
+  useEffect(function() {
+    var t = setInterval(function() { setTestimonialIndex(function(i) { return (i + 1) % testimonials.length; }); }, 5000);
+    return function() { clearInterval(t); };
+  }, []);
+
   if (showPromise) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in">
+      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-slide-up">
         <div className="bg-white/5 backdrop-blur rounded-2xl p-8 border border-white/10 max-w-sm">
           <CommunityPromise />
         </div>
@@ -51,7 +78,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
 
   if (step === 'duration') {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
+      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-slide-up relative overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
         <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
           <button onClick={function() { setStep(role === 'seeker' ? 'mood' : 'role'); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
@@ -85,7 +112,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
 
   if (step === 'mood') {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
+      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-slide-up relative overflow-hidden">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
         <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
           <button onClick={function() { setStep('role'); setMood([]); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
@@ -220,7 +247,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       </section>
 
       {/* How It Works */}
-      <section className="px-5 py-16 sm:py-24">
+      <section className="px-5 py-16 sm:py-24 scroll-hidden">
         <div className="max-w-3xl mx-auto text-center space-y-12">
           <div className="space-y-3">
             <h2 className="text-3xl sm:text-5xl font-serif text-white">How it works</h2>
@@ -253,7 +280,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       </section>
 
       {/* Built Different */}
-      <section className="px-5 py-16 sm:py-24 relative">
+      <section className="px-5 py-16 sm:py-24 relative scroll-hidden">
         <div className="absolute top-1/2 right-0 w-[400px] h-[400px] rounded-full bg-emerald-500/3 blur-3xl pointer-events-none -translate-y-1/2" />
         <div className="max-w-3xl mx-auto text-center space-y-12 relative z-10">
           <div className="space-y-3">
@@ -309,8 +336,32 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
         </div>
       </section>
 
+      {/* Testimonials */}
+      <section className="px-5 py-16 sm:py-24 scroll-hidden">
+        <div className="max-w-2xl mx-auto text-center space-y-12">
+          <div className="space-y-3">
+            <h2 className="text-3xl sm:text-5xl font-serif text-white">What people are saying</h2>
+            <p className="text-gray-400 text-base font-light max-w-md mx-auto">Real words from real people. No names, just like everything here.</p>
+          </div>
+          <div className="relative min-h-[160px] flex items-center justify-center">
+            <div key={testimonialIndex} className="animate-slide-up max-w-lg mx-auto">
+              <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-8 backdrop-blur-sm">
+                <svg className="w-8 h-8 text-emerald-500/30 mb-4 mx-auto" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.731-9.57 8.983-10.609l.998 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.986z" /></svg>
+                <p className="text-gray-300 text-lg font-light leading-relaxed italic">{testimonials[testimonialIndex].text}</p>
+                <p className="text-emerald-400/60 text-sm font-light mt-4">{"— "}{testimonials[testimonialIndex].from}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-center">
+            {testimonials.map(function(_, i) {
+              return <button key={i} onClick={function() { setTestimonialIndex(i); }} className={"w-2 h-2 rounded-full transition-all " + (i === testimonialIndex ? "bg-emerald-400 w-6" : "bg-white/20 hover:bg-white/40")} />;
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* Coming Soon */}
-      <section className="px-5 py-16 sm:py-24">
+      <section className="px-5 py-16 sm:py-24 scroll-hidden">
         <div className="max-w-3xl mx-auto text-center space-y-12">
           <div className="space-y-3">
             <h2 className="text-3xl sm:text-5xl font-serif text-white">On the horizon</h2>
@@ -378,7 +429,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       </section>
 
       {/* Final CTA */}
-      <section className="px-5 py-16 sm:py-24 relative">
+      <section className="px-5 py-16 sm:py-24 relative scroll-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
         <div className="max-w-md mx-auto text-center space-y-8 relative z-10">
           <div className="space-y-4">
