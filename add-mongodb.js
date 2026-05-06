@@ -1,0 +1,27 @@
+var fs = require("fs");
+console.log("Adding MongoDB to Letters...\n");
+var pkg = JSON.parse(fs.readFileSync("server/package.json", "utf8"));
+pkg.dependencies.mongoose = "^8.5.0";
+fs.writeFileSync("server/package.json", JSON.stringify(pkg, null, 2));
+console.log("1/2 mongoose added to package.json");
+
+fs.writeFileSync("server/letters.js", [
+'var express = require("express");',
+'var mongoose = require("mongoose");',
+'var router = express.Router();',
+'var rateLimitMap = new Map();',
+'var MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/someonetoday";',
+'mongoose.connect(MONGO_URI).then(function() { console.log("[LETTERS] Connected to MongoDB"); }).catch(function(err) { console.log("[LETTERS] MongoDB error:", err.message); });',
+'var replySchema = new mongoose.Schema({ text: String, createdAt: { type: Number, default: Date.now } });',
+'var letterSchema = new mongoose.Schema({ text: { type: String, required: true }, tags: [String], type: { type: String, default: "letter" }, hearts: { type: Number, default: 0 }, heartIPs: [String], replies: [replySchema], createdAt: { type: Number, default: Date.now } });',
+'var Letter = mongoose.model("Letter", letterSchema);',
+'function getClientIP(req) { return req.headers["x-forwarded-for"] || req.connection.remoteAddress || "unknown"; }',
+'router.get("/", function(req, res) { var page = parseInt(req.query.page) || 0; var limit = 20; var tag = req.query.tag || null; var filter = {}; if (tag && tag !== "all") filter.tags = tag; Letter.countDocuments(filter).then(function(total) { Letter.find(filter).sort({ createdAt: -1 }).skip(page * limit).limit(limit).then(function(letters) { var safe = letters.map(function(l) { return { id: l._id, text: l.text.length > 200 ? l.text.slice(0, 200) + "..." : l.text, tags: l.tags, hearts: l.hearts || 0, replyCount: (l.replies || []).length, createdAt: l.createdAt, type: l.type || "letter" }; }); res.json({ letters: safe, total: total, hasMore: (page + 1) * limit < total }); }); }).catch(function() { res.status(500).json({ error: "Failed to load letters" }); }); });',
+'router.get("/:id", function(req, res) { Letter.findById(req.params.id).then(function(letter) { if (!letter) return res.status(404).json({ error: "Letter not found" }); res.json({ id: letter._id, text: letter.text, tags: letter.tags, type: letter.type, hearts: letter.hearts, replies: letter.replies, createdAt: letter.createdAt }); }).catch(function() { res.status(404).json({ error: "Letter not found" }); }); });',
+'router.post("/", function(req, res) { var ip = getClientIP(req); var now = Date.now(); var lastPost = rateLimitMap.get(ip); if (lastPost && now - lastPost < 600000) { var wait = Math.ceil((600000 - (now - lastPost)) / 60000); return res.status(429).json({ error: "Please wait " + wait + " more minute(s)." }); } var text = (req.body.text || "").trim(); var tags = req.body.tags || []; var type = req.body.type || "letter"; if (!text || text.length < 10) return res.status(400).json({ error: "Letter must be at least 10 characters." }); if (text.length > 2000) return res.status(400).json({ error: "Letter must be under 2000 characters." }); var validTags = ["lonely","anxious","sad","lost","grateful","hopeful","overwhelmed","angry","numb","healing"]; tags = tags.filter(function(t) { return validTags.indexOf(t) !== -1; }).slice(0, 3); var letter = new Letter({ text: text, tags: tags, type: type, hearts: 0, heartIPs: [], replies: [], createdAt: now }); letter.save().then(function(saved) { rateLimitMap.set(ip, now); console.log("[LETTER] New " + type + " (" + saved._id + ")"); res.json({ success: true, letter: { id: saved._id, text: saved.text, tags: saved.tags, type: saved.type, hearts: 0, replyCount: 0, createdAt: saved.createdAt } }); }).catch(function() { res.status(500).json({ error: "Failed to save letter" }); }); });',
+'router.post("/:id/reply", function(req, res) { var text = (req.body.text || "").trim(); if (!text || text.length < 2) return res.status(400).json({ error: "Reply is too short." }); if (text.length > 500) return res.status(400).json({ error: "Reply must be under 500 characters." }); Letter.findById(req.params.id).then(function(letter) { if (!letter) return res.status(404).json({ error: "Letter not found" }); letter.replies.push({ text: text, createdAt: Date.now() }); letter.save().then(function(saved) { var r = saved.replies[saved.replies.length - 1]; res.json({ success: true, reply: { id: r._id, text: r.text, createdAt: r.createdAt } }); }); }).catch(function() { res.status(404).json({ error: "Letter not found" }); }); });',
+'router.post("/:id/heart", function(req, res) { var ip = getClientIP(req); Letter.findById(req.params.id).then(function(letter) { if (!letter) return res.status(404).json({ error: "Letter not found" }); if (!letter.heartIPs) letter.heartIPs = []; var idx = letter.heartIPs.indexOf(ip); if (idx === -1) { letter.heartIPs.push(ip); letter.hearts = (letter.hearts || 0) + 1; } else { letter.heartIPs.splice(idx, 1); letter.hearts = Math.max(0, (letter.hearts || 1) - 1); } letter.save().then(function() { res.json({ hearts: letter.hearts, hearted: idx === -1 }); }); }).catch(function() { res.status(404).json({ error: "Letter not found" }); }); });',
+'module.exports = router;'
+].join("\n"));
+console.log("2/2 server/letters.js upgraded to MongoDB");
+console.log("\nDONE");
