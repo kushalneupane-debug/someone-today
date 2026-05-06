@@ -273,6 +273,8 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
             </button>
           </div>
 
+          </div>
+
           <div className="flex items-center justify-center gap-6">
             <div className="flex items-center gap-1.5">
               <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
