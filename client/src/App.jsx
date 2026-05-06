@@ -8,6 +8,7 @@ import CommunityPromise from './components/CommunityPromise';
 import CrisisRedirection from './components/CrisisRedirection';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
+import LetterWall from './components/LetterWall';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
@@ -29,6 +30,7 @@ function App() {
   const [extensionIncoming, setExtensionIncoming] = useState(false);
   const [extensionUsed, setExtensionUsed] = useState(false);
   const [extensionConfirmed, setExtensionConfirmed] = useState(false);
+  const [showLetters, setShowLetters] = useState(false);
   const socketRef = useRef(null);
   const roleRef = useRef(null);
 
@@ -173,6 +175,10 @@ function App() {
     return <TermsOfService onBack={function() { setShowTerms(false); }} />;
   }
 
+  if (showLetters) {
+    return <LetterWall onBack={function() { setShowLetters(false); }} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       {screen === 'landing' && (
@@ -184,6 +190,8 @@ function App() {
           onShowTerms={function() { setShowTerms(true); }}
           onSubscribePush={subscribeToPush}
           pushEnabled={pushEnabled}
+        
+        onShowLetters={function() { setShowLetters(true); }}
         />
       )}
       {screen === 'waiting' && (

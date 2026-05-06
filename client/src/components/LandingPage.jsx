@@ -17,7 +17,7 @@ var testimonials = [
   { text: "No sign-up, no profile, no history. Just a real human on the other side. This is what the internet should be.", from: "First-time user" }
 ];
 
-export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onShowPrivacy, onShowTerms }) {
+export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onShowPrivacy, onShowTerms, onShowLetters }) {
   var _step = useState('role');
   var step = _step[0]; var setStep = _step[1];
   var _role = useState(null);
@@ -85,6 +85,27 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
         <div className="relative z-10 text-center space-y-8 max-w-sm w-full">
           <button onClick={function() { setStep(role === 'seeker' ? 'mood' : 'role'); }} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back</button>
           <div className="space-y-3">
+            {/* Letters - Primary CTA */}
+            <button onClick={onShowLetters} className="w-full py-5 px-6 rounded-2xl bg-emerald-500/[0.08] border border-emerald-500/[0.25] hover:bg-emerald-500/[0.15] hover:border-emerald-500/40 transition-all text-left group backdrop-blur-sm shadow-lg shadow-emerald-500/5">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">✉</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-base sm:text-lg font-semibold text-emerald-300">Letters</span>
+                  <p className="text-gray-400 text-sm mt-1 font-light">Write what you feel. Read others. Reply with kindness.</p>
+                </div>
+                <svg className="w-5 h-5 text-emerald-500/50 group-hover:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </div>
+            </button>
+
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-white/[0.06]"></div>
+              <span className="text-gray-600 text-xs font-light">or talk to someone live</span>
+              <div className="flex-1 h-px bg-white/[0.06]"></div>
+            </div>
+
+
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
               <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />

@@ -18,6 +18,7 @@ var getSessionBySocket = sessions.getSessionBySocket;
 var wasSessionEnded = sessions.wasSessionEnded;
 var markSessionEnded = sessions.markSessionEnded;
 var push = require('./push');
+var lettersRouter = require('./letters');
 
 var app = express();
 var server = http.createServer(app);
@@ -310,6 +311,8 @@ app.get('/api/test-telegram', function(req, res) {
   r.write(body);
   r.end();
 });
+
+app.use('/api/letters', lettersRouter);
 
 app.get('*', function(req, res) {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
