@@ -59,6 +59,72 @@ function AnimatedCounter({ target, duration = 2000 }) {
   return <span ref={ref}>{count.toLocaleString()}</span>;
 }
 
+function ChatPreview() {
+  var script = [
+    { from: 'them', text: "Hey. I'm here. Take your time." },
+    { from: 'me',   text: "I don't really know how to start..." },
+    { from: 'them', text: "That's okay. You don't have to." },
+    { from: 'them', text: "I'm just here to listen." },
+    { from: 'me',   text: "I just needed someone tonight." },
+    { from: 'them', text: "I'm really glad you reached out." },
+  ];
+  var [visible, setVisible] = useState(3);
+  var [typing, setTyping] = useState(false);
+  useEffect(function() {
+    if (visible >= script.length) {
+      var t = setTimeout(function() { setVisible(3); }, 4000);
+      return function() { clearTimeout(t); };
+    }
+    var t1 = setTimeout(function() { setTyping(true); }, 900);
+    var t2 = setTimeout(function() { setTyping(false); setVisible(function(v) { return v + 1; }); }, 2400);
+    return function() { clearTimeout(t1); clearTimeout(t2); };
+  }, [visible]);
+  var msgs = script.slice(0, visible);
+  var nextFrom = visible < script.length ? script[visible].from : null;
+  return (
+    <div className="chat-glow-wrap w-full">
+      <div className="glass-strong overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.05] bg-white/[0.02]">
+          <div className="relative">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center text-sm">👤</div>
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#04040a]" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white/75 text-sm font-medium leading-none">Anonymous listener</p>
+            <p className="text-emerald-400/60 text-[11px] mt-1">● Online · matched in 8s</p>
+          </div>
+          <span className="text-white/15 text-sm">🔒</span>
+        </div>
+        <div className="px-4 py-5 space-y-2.5 min-h-[220px] flex flex-col justify-end">
+          {msgs.map(function(msg, i) {
+            var isNew = i === visible - 1 && visible > 3;
+            return (
+              <div key={i} className={'flex ' + (msg.from === 'me' ? 'justify-end' : 'justify-start') + (isNew ? ' chat-msg-in' : '')}>
+                <div className={'max-w-[82%] px-3.5 py-2 rounded-2xl text-sm font-light leading-relaxed ' +
+                  (msg.from === 'me'
+                    ? 'bg-emerald-500/15 border border-emerald-500/20 text-white/80 rounded-br-sm'
+                    : 'bg-white/[0.05] border border-white/[0.07] text-white/60 rounded-bl-sm')}>
+                  {msg.text}
+                </div>
+              </div>
+            );
+          })}
+          {typing && nextFrom && (
+            <div className={'flex ' + (nextFrom === 'me' ? 'justify-end' : 'justify-start') + ' chat-msg-in'}>
+              <div className="px-3.5 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.07] flex items-center gap-1.5">
+                <span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" />
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="px-5 py-3 border-t border-white/[0.04] bg-black/20">
+          <p className="text-white/15 text-[10px] text-center font-light">Nothing is saved · Disappears when you leave</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onShowPrivacy, onShowTerms, onShowLetters }) {
   var [step, setStep] = useState('role');
   var [role, setRole] = useState(null);
@@ -213,10 +279,15 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
             );
           })}
         </div>
-        <div className="relative z-10 text-center max-w-2xl mx-auto space-y-10">
+        <div className="hero-glow" />
+
+        <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+
+          {/* ── Left: text + CTAs ── */}
+          <div className="flex-1 text-center lg:text-left space-y-8 min-w-0">
 
           {/* Eyebrow */}
-          <div className="flex justify-center animate-slide-up" style={{animationDelay:'0.1s'}}>
+          <div className="flex justify-center lg:justify-start animate-slide-up" style={{animationDelay:'0.1s'}}>
             <span className="pill">
               <span className="pill-dot animate-pulse-soft" />
               Anonymous · Real · Human
@@ -234,14 +305,14 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           </div>
 
           {/* Subheadline */}
-          <p className="text-white/45 text-lg sm:text-xl font-light leading-relaxed max-w-lg mx-auto animate-slide-up" style={{animationDelay:'0.3s'}}>
+          <p className="text-white/60 text-lg sm:text-xl font-light leading-relaxed max-w-lg mx-auto lg:mx-0 animate-slide-up" style={{animationDelay:'0.3s'}}>
             Talk to a real person. Right now. No profiles, no history, no algorithms.
             Just two humans being present for each other.
           </p>
 
           {/* Live indicator */}
           {activeCount > 0 ? (
-            <div className="flex items-center justify-center gap-3 animate-fade-in">
+            <div className="flex items-center justify-center lg:justify-start gap-3 animate-fade-in">
               <div className="relative flex-shrink-0 w-4 h-4 flex items-center justify-center">
                 <span className="absolute inset-0 rounded-full bg-emerald-400/25 animate-ping" />
                 <span className="absolute -inset-1 rounded-full bg-emerald-400/10 animate-ping" style={{animationDelay:'0.45s'}} />
@@ -252,7 +323,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
               </p>
             </div>
           ) : (
-            <div className="flex items-center justify-center gap-2.5 opacity-50">
+            <div className="flex items-center justify-center lg:justify-start gap-2.5 opacity-50">
               <span className="w-2 h-2 rounded-full bg-emerald-400/60 animate-pulse-soft" />
               <span className="match-dot-1 w-1.5 h-1.5 rounded-full bg-white/20" />
               <span className="match-dot-2 w-1.5 h-1.5 rounded-full bg-white/20" />
@@ -265,7 +336,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           <div className="space-y-4 animate-slide-up" style={{animationDelay:'0.4s'}}>
             {/* Letters */}
             <button onClick={onShowLetters}
-              className="w-full max-w-sm mx-auto flex items-center gap-4 p-5 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/25 hover:bg-emerald-500/[0.04] transition-all group">
+              className="w-full max-w-sm mx-auto lg:mx-0 flex items-center gap-4 p-5 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/25 hover:bg-emerald-500/[0.04] transition-all group">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500/25 transition-all">
                 <span className="text-lg">✉</span>
               </div>
@@ -277,14 +348,14 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
             </button>
 
             {/* Divider */}
-            <div className="flex items-center gap-4 max-w-sm mx-auto py-1">
+            <div className="flex items-center gap-4 max-w-sm mx-auto lg:mx-0 py-1">
               <div className="flex-1 h-px bg-white/[0.05]" />
               <span className="text-white/20 text-xs font-light">or talk live</span>
               <div className="flex-1 h-px bg-white/[0.05]" />
             </div>
 
             {/* Live chat buttons */}
-            <div className="flex gap-3 max-w-sm mx-auto">
+            <div className="flex gap-3 max-w-sm mx-auto lg:mx-0">
               <button onClick={function(){setRole('seeker');setStep('mood');}} className="btn-primary btn-ripple flex-1 py-4 text-sm sm:text-base font-semibold tracking-wide">
                 I need someone
               </button>
@@ -295,16 +366,23 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           </div>
 
           {/* Trust row */}
-          <div className="flex items-center justify-center gap-6 flex-wrap animate-slide-up" style={{animationDelay:'0.5s'}}>
+          <div className="flex items-center justify-center lg:justify-start gap-6 flex-wrap animate-slide-up" style={{animationDelay:'0.5s'}}>
             {[['🔒','Private'],['🗑️','Nothing saved'],['👤','Anonymous'],['🤝','Real humans']].map(function(item) {
               return (
                 <div key={item[1]} className="flex items-center gap-1.5">
                   <span className="text-sm opacity-60">{item[0]}</span>
-                  <span className="text-white/35 text-xs font-light">{item[1]}</span>
+                  <span className="text-white/45 text-xs font-light">{item[1]}</span>
                 </div>
               );
             })}
           </div>
+          </div>
+
+          {/* ── Right: animated chat preview ── */}
+          <div className="hidden lg:flex flex-shrink-0 w-[380px] animate-fade-in" style={{animationDelay:'0.6s'}}>
+            <ChatPreview />
+          </div>
+
         </div>
 
         {/* Scroll hint */}
@@ -366,7 +444,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
                     {f.icon}
                   </div>
                   <h3 className="text-white font-medium text-base">{f.title}</h3>
-                  <p className="text-white/40 text-sm font-light leading-relaxed">{f.desc}</p>
+                  <p className="text-white/55 text-sm font-light leading-relaxed">{f.desc}</p>
                 </div>
               );
             })}
@@ -390,7 +468,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
                 <h2 className="text-display-md text-white">Letters</h2>
                 <p className="text-white/45 font-light leading-relaxed text-base max-w-lg">
                   Write what's on your heart at 3am. Someone will read it and reply with kindness.
-                  No sign-up. No judgment. Just you and your words — and someone out there who cares.
+                  No sign-up. No judgment. Just you and your words — and someone out there who genuinely cares.
                 </p>
                 <div className="flex flex-wrap gap-3 pt-2">
                   {['Write a letter','Read others','Reply with kindness'].map(function(t) {
@@ -413,7 +491,8 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
             <p className="text-label text-emerald-400/50">Simple by design</p>
             <h2 className="text-display-lg text-white">How it works.</h2>
           </div>
-          <div className="grid sm:grid-cols-3 gap-6">
+          <div className="relative grid sm:grid-cols-3 gap-6 sm:gap-10">
+            <div className="hidden sm:block absolute top-[22px] left-[calc(16.67%+3rem)] right-[calc(16.67%+3rem)] h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
             {[
               { n:'01', title:'Choose your role', desc:'Need to talk? Want to listen? Pick what feels right for you today.' },
               { n:'02', title:'Connect instantly', desc:'We match you with a real person in seconds. No profiles, no waiting rooms, no forms.' },
@@ -422,11 +501,13 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
               return (
                 <div key={i} className={'scroll-hidden space-y-5 stagger-' + (i+1)}>
                   <div className="flex items-center gap-4">
-                    <span className="font-display text-5xl font-light text-emerald-400/20 leading-none">{s.n}</span>
-                    <div className="flex-1 h-px bg-white/[0.04]" />
+                    <div className="w-11 h-11 rounded-full border border-emerald-500/25 bg-emerald-500/[0.07] flex items-center justify-center flex-shrink-0">
+                      <span className="font-display text-lg font-light text-emerald-400/70 leading-none">{s.n}</span>
+                    </div>
+                    <div className="flex-1 h-px bg-white/[0.04] sm:hidden" />
                   </div>
                   <h3 className="text-white font-medium text-base">{s.title}</h3>
-                  <p className="text-white/35 text-sm font-light leading-relaxed">{s.desc}</p>
+                  <p className="text-white/50 text-sm font-light leading-relaxed">{s.desc}</p>
                 </div>
               );
             })}
