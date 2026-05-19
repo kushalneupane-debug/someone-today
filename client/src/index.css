@@ -181,3 +181,35 @@
 /* ── Floating letters bg ── */
 @keyframes letterFloat { 0%,100%{transform:translateY(0) rotate(0deg); opacity:0.03} 50%{transform:translateY(-30px) rotate(5deg); opacity:0.06} }
 .letter-float { animation: letterFloat linear infinite; }
+
+/* ── Floating emotion words ── */
+.word-float { color: rgba(255,255,255,1); user-select: none; pointer-events: none; position: absolute; bottom: -40px; animation: wordFloat linear infinite; white-space: nowrap; }
+@keyframes wordFloat { 0%{transform:translateY(0);opacity:0} 6%{opacity:1} 88%{opacity:0.6} 100%{transform:translateY(-115vh);opacity:0} }
+@media(prefers-reduced-motion:reduce){.word-float{display:none}}
+
+/* ── Social proof ticker ── */
+.ticker-wrap { overflow: hidden; }
+.ticker-track { display: inline-flex; white-space: nowrap; animation: tickerScroll 50s linear infinite; }
+.ticker-track:hover { animation-play-state: paused; }
+.ticker-item { display: inline-flex; align-items: center; gap: 8px; padding: 0 36px; font-size: 0.68rem; color: rgba(255,255,255,0.18); letter-spacing: 0.05em; white-space: nowrap; }
+@keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+@media(prefers-reduced-motion:reduce){.ticker-track{animation:none}}
+
+/* ── Animated gradient text ── */
+.text-gradient-emerald-anim { background: linear-gradient(135deg, #34d399 0%, #10b981 30%, #059669 55%, #a7f3d0 80%, #34d399 100%); background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: gradShift 6s ease-in-out infinite; }
+@keyframes gradShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+
+/* ── Ripple button effect ── */
+.btn-ripple { position: relative; overflow: hidden; }
+.btn-ripple::after { content:''; position:absolute; inset:0; background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),rgba(255,255,255,0.25) 0%,transparent 70%); opacity:0; transition:opacity 0.4s ease; }
+.btn-ripple:hover::after { opacity:1; }
+
+/* ── Feature card icon pulse ── */
+.feature-icon { transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+.glass:hover .feature-icon { transform: scale(1.15) rotate(-5deg); }
+
+/* ── Number pill ── */
+.live-number { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+
+/* ── Glow on active stat ── */
+.stat-glow { text-shadow: 0 0 40px rgba(16,185,129,0.4); }

@@ -19,6 +19,21 @@ var testimonials = [
   { text: "I was having the worst night. A stranger stayed with me for 30 minutes. It changed everything.", from: "Someone Today user" },
 ];
 
+var tickerMsgs = [
+  '💬 Someone just opened a conversation',
+  '✉ New letter posted on the wall',
+  '🤝 Two people just connected',
+  '💬 "Thank you — I really needed this"',
+  '🌙 A late-night conversation just ended',
+  '✉ A listener replied with kindness',
+  '💬 Someone felt heard for the first time tonight',
+  '🤝 A new listener just joined',
+  '💬 Someone said they feel better now',
+  '✉ An anonymous letter brought someone to tears (good ones)',
+];
+
+var floatWords = ['heard','safe','real','present','human','here','understood','seen','together','gentle','ok','known'];
+
 function AnimatedCounter({ target, duration = 2000 }) {
   var [count, setCount] = useState(0);
   var ref = useRef(null);
@@ -53,6 +68,15 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   var [totalSessions, setTotalSessions] = useState(0);
   var [showPromise, setShowPromise] = useState(false);
   var [testimonialIndex, setTestimonialIndex] = useState(0);
+  var [mousePos, setMousePos] = useState({x: 0, y: 0});
+
+  useEffect(function() {
+    function onMouse(e) {
+      setMousePos({x: (e.clientX / window.innerWidth - 0.5) * 30, y: (e.clientY / window.innerHeight - 0.5) * 20});
+    }
+    window.addEventListener('mousemove', onMouse, {passive: true});
+    return function() { window.removeEventListener('mousemove', onMouse); };
+  }, []);
 
   useEffect(function() {
     fetch('/api/stats').then(function(r){return r.json();}).then(function(d){setActiveCount(d.active||0);setTotalSessions(d.totalSessions||0);}).catch(function(){});
@@ -159,8 +183,8 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   return (
     <div className="min-h-screen bg-[#04040a] text-white overflow-x-hidden">
 
-      {/* Ambient orbs */}
-      <div className="orb orb-emerald orb-animate"  style={{width:'800px',height:'800px',top:'-200px',left:'50%',transform:'translateX(-50%)',opacity:0.7,zIndex:0}} />
+      {/* Ambient orbs — hero orb follows mouse */}
+      <div className="orb orb-emerald" style={{width:'900px',height:'900px',top:'-250px',left:'50%',transform:`translateX(calc(-50% + ${mousePos.x}px)) translateY(${mousePos.y}px)`,opacity:0.7,zIndex:0,transition:'transform 0.5s ease-out'}} />
       <div className="orb orb-purple orb-animate-slow" style={{width:'600px',height:'600px',bottom:'20%',left:'-200px',zIndex:0}} />
       <div className="orb orb-teal orb-animate"  style={{width:'400px',height:'400px',top:'40%',right:'-100px',zIndex:0,animationDelay:'10s'}} />
 
@@ -178,6 +202,17 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
 
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-5 pt-12 pb-20 overflow-hidden">
+        {/* Floating emotion words */}
+        <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
+          {floatWords.map(function(word, i) {
+            return (
+              <span key={word} className="word-float font-display italic"
+                style={{left:((i*8+5)%90)+'%',fontSize:(1.0+(i%4)*0.45)+'rem',animationDuration:(17+(i*2.7)%21)+'s',animationDelay:((i*1.9)%11)+'s'}}>
+                {word}
+              </span>
+            );
+          })}
+        </div>
         <div className="relative z-10 text-center max-w-2xl mx-auto space-y-10">
 
           {/* Eyebrow */}
@@ -193,7 +228,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
             <h1 className="text-display-xl text-white">
               You don't have to go
             </h1>
-            <h1 className="text-display-xl text-gradient-emerald italic">
+            <h1 className="text-display-xl text-gradient-emerald-anim italic">
               through today alone.
             </h1>
           </div>
@@ -205,10 +240,24 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           </p>
 
           {/* Live indicator */}
-          {activeCount > 0 && (
-            <div className="flex items-center justify-center gap-2 animate-fade-in">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft shadow-lg shadow-emerald-400/60" />
-              <p className="text-emerald-400/70 text-sm font-light">{activeCount} {activeCount===1?'conversation':'conversations'} happening right now</p>
+          {activeCount > 0 ? (
+            <div className="flex items-center justify-center gap-3 animate-fade-in">
+              <div className="relative flex-shrink-0 w-4 h-4 flex items-center justify-center">
+                <span className="absolute inset-0 rounded-full bg-emerald-400/25 animate-ping" />
+                <span className="absolute -inset-1 rounded-full bg-emerald-400/10 animate-ping" style={{animationDelay:'0.45s'}} />
+                <span className="relative w-2.5 h-2.5 rounded-full bg-emerald-400 block shadow-lg shadow-emerald-400/70" />
+              </div>
+              <p className="text-emerald-400/70 text-sm font-light live-number">
+                <span className="text-emerald-300 font-semibold">{activeCount}</span> {activeCount===1?'person is':'people are'} here right now
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2.5 opacity-50">
+              <span className="w-2 h-2 rounded-full bg-emerald-400/60 animate-pulse-soft" />
+              <span className="match-dot-1 w-1.5 h-1.5 rounded-full bg-white/20" />
+              <span className="match-dot-2 w-1.5 h-1.5 rounded-full bg-white/20" />
+              <span className="match-dot-3 w-1.5 h-1.5 rounded-full bg-white/20" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400/60 animate-pulse-soft" style={{animationDelay:'1.3s'}} />
             </div>
           )}
 
@@ -236,10 +285,10 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
 
             {/* Live chat buttons */}
             <div className="flex gap-3 max-w-sm mx-auto">
-              <button onClick={function(){setRole('seeker');setStep('mood');}} className="btn-primary flex-1 text-sm">
+              <button onClick={function(){setRole('seeker');setStep('mood');}} className="btn-primary btn-ripple flex-1 py-4 text-sm sm:text-base font-semibold tracking-wide">
                 I need someone
               </button>
-              <button onClick={function(){setRole('listener');setStep('duration');}} className="btn-ghost flex-1 text-sm">
+              <button onClick={function(){setRole('listener');setStep('duration');}} className="btn-ghost btn-ripple flex-1 py-4 text-sm sm:text-base">
                 I can listen
               </button>
             </div>
@@ -263,6 +312,15 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           <svg className="w-5 h-5 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7"/></svg>
         </div>
       </section>
+
+      {/* ── SOCIAL PROOF TICKER ── */}
+      <div className="relative z-10 ticker-wrap border-t border-b border-white/[0.04] bg-white/[0.01] py-3">
+        <div className="ticker-track">
+          {tickerMsgs.concat(tickerMsgs).map(function(msg, i) {
+            return <span key={i} className="ticker-item">{msg}</span>;
+          })}
+        </div>
+      </div>
 
       {/* ── STATS STRIP ── */}
       <section className="relative z-10 px-5 py-16 scroll-hidden">
@@ -304,7 +362,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
             ].map(function(f, i) {
               return (
                 <div key={i} className={'glass p-7 space-y-4 scroll-hidden stagger-' + (i+1)}>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-lg">
+                  <div className="feature-icon w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-lg">
                     {f.icon}
                   </div>
                   <h3 className="text-white font-medium text-base">{f.title}</h3>
