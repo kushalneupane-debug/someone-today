@@ -2,10 +2,16 @@ var express = require('express');
 var http = require('http');
 var https = require('https');
 var path = require('path');
+var fs = require('fs');
 var Server = require('socket.io').Server;
 var cors = require('cors');
 var reportRoutes = require('./reports');
 var matching = require('./matching');
+
+var STATS_FILE = path.join(__dirname, 'stats.json');
+var siteStats = { totalSessions: 0 };
+try { siteStats = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8')); } catch(e) { siteStats = { totalSessions: 0 }; }
+function saveStats() { try { fs.writeFileSync(STATS_FILE, JSON.stringify(siteStats)); } catch(e) {} }
 var addToQueue = matching.addToQueue;
 var removeFromQueue = matching.removeFromQueue;
 var getQueueCounts = matching.getQueueCounts;
@@ -36,6 +42,10 @@ app.get('/api/health', function(req, res) {
 var activeSessionCount = 0;
 app.get('/api/active', function(req, res) {
   res.json({ active: activeSessionCount });
+});
+
+app.get('/api/stats', function(req, res) {
+  res.json({ totalSessions: siteStats.totalSessions, active: activeSessionCount });
 });
 
 app.get('/api/push/vapid-public-key', function(req, res) {
@@ -270,6 +280,8 @@ function handleSessionEnd(session, reason) {
   var ended = endSession(session.roomId);
   if (!ended) return;
   activeSessionCount = Math.max(0, activeSessionCount - 1);
+  siteStats.totalSessions++;
+  saveStats();
   markSessionEnded(session.seeker);
   markSessionEnded(session.listener);
   messageCooldown.delete(session.seeker);

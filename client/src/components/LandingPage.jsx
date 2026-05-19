@@ -14,7 +14,11 @@ var testimonials = [
   { text: "I just needed someone to listen. No advice, no judgment. This was exactly that.", from: "Anonymous" },
   { text: "I was having the worst night. A stranger stayed with me for 30 minutes. It changed everything.", from: "Someone who needed it" },
   { text: "Being a listener here reminds me that small acts of presence matter more than we think.", from: "A listener" },
-  { text: "No sign-up, no profile, no history. Just a real human on the other side. This is what the internet should be.", from: "First-time user" }
+  { text: "No sign-up, no profile, no history. Just a real human on the other side. This is what the internet should be.", from: "First-time user" },
+  { text: "I cried during the conversation. In a good way. A stranger made me feel seen at 2am.", from: "Seeker" },
+  { text: "I came to listen. I ended up learning something about myself too.", from: "A listener" },
+  { text: "The Letters section is something else. I wrote one I've been holding for years. Someone replied with so much kindness.", from: "Anonymous" },
+  { text: "This is the internet I thought we'd build. Quiet, kind, human.", from: "Someone Today user" },
 ];
 
 export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onShowPrivacy, onShowTerms, onShowLetters }) {
@@ -28,6 +32,8 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   var mood = _mood[0]; var setMood = _mood[1];
   var _active = useState(0);
   var activeCount = _active[0]; var setActiveCount = _active[1];
+  var _totalSessions = useState(0);
+  var totalSessions = _totalSessions[0]; var setTotalSessions = _totalSessions[1];
   var _promise = useState(false);
   var showPromise = _promise[0]; var setShowPromise = _promise[1];
   var _ti = useState(0);
@@ -36,14 +42,14 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   var isMatching = _matching[0]; var setIsMatching = _matching[1];
 
   useEffect(function() {
-    fetch('/api/active')
+    fetch('/api/stats')
       .then(function(r) { return r.json(); })
-      .then(function(data) { setActiveCount(data.active || 0); })
+      .then(function(data) { setActiveCount(data.active || 0); setTotalSessions(data.totalSessions || 0); })
       .catch(function() {});
     var interval = setInterval(function() {
-      fetch('/api/active')
+      fetch('/api/stats')
         .then(function(r) { return r.json(); })
-        .then(function(data) { setActiveCount(data.active || 0); })
+        .then(function(data) { setActiveCount(data.active || 0); setTotalSessions(data.totalSessions || 0); })
         .catch(function() {});
     }, 15000);
     return function() { clearInterval(interval); };
@@ -175,13 +181,15 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
 
-      {/* Launch Announcement Bar */}
+      {/* Live Stats Bar */}
       <div className="w-full bg-emerald-500/10 border-b border-emerald-500/20 py-2.5 px-4">
-        <p className="text-center text-sm sm:text-base font-light text-emerald-300">
-          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2 align-middle" />
-          We just launched!
-          <span className="text-emerald-400/60 mx-1.5">&mdash;</span>
-          Be one of the first to be here for someone today.
+        <p className="text-center text-sm font-light text-emerald-300 flex items-center justify-center gap-2 flex-wrap">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+          {totalSessions > 0
+            ? <><span className="text-white font-medium">{totalSessions.toLocaleString()}</span><span className="text-emerald-300/80"> conversations have happened here.</span><span className="text-emerald-400/60 mx-1">&mdash;</span><span className="text-emerald-300/80">Be part of one.</span></>
+            : <span className="text-emerald-300/80">A quiet place for real conversations. No sign-up needed.</span>
+          }
+          {activeCount > 0 && <span className="text-emerald-400/60 text-xs ml-1">({activeCount} happening right now)</span>}
         </p>
       </div>
 
@@ -414,6 +422,9 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
               return <button key={i} onClick={function() { setTestimonialIndex(i); }} className={"w-2 h-2 rounded-full transition-all " + (i === testimonialIndex ? "bg-emerald-400 w-6" : "bg-white/20 hover:bg-white/40")} />;
             })}
           </div>
+          <button onClick={onShowLetters} className="text-emerald-400/60 hover:text-emerald-400 text-sm font-light transition-colors underline underline-offset-4">
+            Share your own story anonymously →
+          </button>
         </div>
       </section>
 

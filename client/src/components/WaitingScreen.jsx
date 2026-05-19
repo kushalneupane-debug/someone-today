@@ -1,25 +1,82 @@
-export default function WaitingScreen({ role, onLeave, noListeners, pushEnabled, onSubscribePush }) {
+import { useState, useEffect } from 'react';
+
+var breathPhases = [
+  { label: 'Breathe in', duration: 4, scale: 1.3 },
+  { label: 'Hold', duration: 4, scale: 1.3 },
+  { label: 'Breathe out', duration: 4, scale: 0.85 },
+  { label: 'Hold', duration: 4, scale: 0.85 },
+];
+
+function BreathingExercise() {
+  var [phaseIdx, setPhaseIdx] = useState(0);
+  var [count, setCount] = useState(breathPhases[0].duration);
+
+  useEffect(function() {
+    var t = setInterval(function() {
+      setCount(function(c) {
+        if (c <= 1) {
+          setPhaseIdx(function(i) {
+            var next = (i + 1) % breathPhases.length;
+            setCount(breathPhases[next].duration);
+            return next;
+          });
+          return breathPhases[0].duration;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return function() { clearInterval(t); };
+  }, []);
+
+  var phase = breathPhases[phaseIdx];
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative flex items-center justify-center w-24 h-24">
+        <div
+          className="absolute inset-0 rounded-full bg-emerald-500/20 transition-transform"
+          style={{ transform: 'scale(' + phase.scale + ')', transitionDuration: phase.duration + 's', transitionTimingFunction: 'ease-in-out' }}
+        />
+        <div
+          className="absolute rounded-full bg-emerald-500/10 transition-transform"
+          style={{ inset: '8px', transform: 'scale(' + phase.scale + ')', transitionDuration: phase.duration + 's', transitionTimingFunction: 'ease-in-out' }}
+        />
+        <span className="relative z-10 text-2xl font-serif text-emerald-400">{count}</span>
+      </div>
+      <p className="text-emerald-300/70 text-sm font-light tracking-wide">{phase.label}</p>
+      <p className="text-gray-600 text-xs font-light">box breathing — 4 counts each</p>
+    </div>
+  );
+}
+
+export default function WaitingScreen({ role, onLeave, noListeners, pushEnabled, onSubscribePush, onShowLetters }) {
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5 animate-fade-in relative overflow-hidden">
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
 
       <div className="relative z-10 max-w-sm w-full text-center space-y-10">
-        <div className="flex justify-center">
-          <div className="relative w-20 h-20">
-            <div className="absolute inset-0 rounded-full bg-emerald-500/10 animate-pulse-soft" />
-            <div className="absolute inset-3 rounded-full bg-emerald-500/15 animate-pulse-soft [animation-delay:0.5s]" />
-            <div className="absolute inset-6 rounded-full bg-emerald-500/20 animate-pulse-soft [animation-delay:1s]" />
-            <div className="absolute inset-8 rounded-full bg-emerald-400/30" />
+
+        {/* Breathing exercise for seekers, pulse animation for listeners */}
+        {role === 'seeker' ? (
+          <BreathingExercise />
+        ) : (
+          <div className="flex justify-center">
+            <div className="relative w-20 h-20">
+              <div className="absolute inset-0 rounded-full bg-emerald-500/10 animate-pulse-soft" />
+              <div className="absolute inset-3 rounded-full bg-emerald-500/15 animate-pulse-soft [animation-delay:0.5s]" />
+              <div className="absolute inset-6 rounded-full bg-emerald-500/20 animate-pulse-soft [animation-delay:1s]" />
+              <div className="absolute inset-8 rounded-full bg-emerald-400/30" />
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="space-y-3">
           <h2 className="text-xl font-serif text-white">
-            {role === 'seeker' ? 'Finding someone for you\u2026' : 'Waiting for someone who needs you\u2026'}
+            {role === 'seeker' ? 'Finding someone for you…' : 'Waiting for someone who needs you…'}
           </h2>
           <p className="text-gray-500 text-sm font-light leading-relaxed">
             {role === 'seeker'
-              ? 'A real person will be with you soon. Take a breath.'
+              ? 'A real person will be with you soon. Breathe with the circle above.'
               : 'Thank you for being here. Someone will find you soon.'}
           </p>
         </div>
@@ -49,6 +106,23 @@ export default function WaitingScreen({ role, onLeave, noListeners, pushEnabled,
               </span>
             )}
           </div>
+        )}
+
+        {/* Write a letter CTA while waiting */}
+        {role === 'seeker' && onShowLetters && (
+          <button
+            onClick={onShowLetters}
+            className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/25 rounded-2xl p-4 text-left group transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">✉️</span>
+              <div className="flex-1">
+                <p className="text-white text-sm font-medium group-hover:text-emerald-300 transition-colors">Write a letter while you wait</p>
+                <p className="text-gray-500 text-xs mt-0.5 font-light">Share what's on your mind. Someone will reply with kindness.</p>
+              </div>
+              <svg className="w-4 h-4 text-gray-600 group-hover:text-emerald-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </div>
+          </button>
         )}
 
         {noListeners && role === 'seeker' && (

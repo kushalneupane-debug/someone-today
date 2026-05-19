@@ -31,6 +31,7 @@ function App() {
   const [extensionUsed, setExtensionUsed] = useState(false);
   const [extensionConfirmed, setExtensionConfirmed] = useState(false);
   const [showLetters, setShowLetters] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState(null);
   const socketRef = useRef(null);
   const roleRef = useRef(null);
 
@@ -53,6 +54,7 @@ function App() {
       setExtensionIncoming(false);
       setExtensionUsed(false);
       setExtensionConfirmed(false);
+      setSessionStartTime(Date.now());
       setScreen('chat');
     });
 
@@ -200,6 +202,7 @@ function App() {
           noListeners={noListeners}
           onSubscribePush={subscribeToPush}
           pushEnabled={pushEnabled}
+          onShowLetters={function() { setShowLetters(true); }}
           onLeave={function() {
             if (socketRef.current) socketRef.current.emit('leave-queue');
             goHome();
@@ -231,6 +234,10 @@ function App() {
           onGoHome={goHome}
           onReport={function() {}}
           onFeedback={function() {}}
+          onShowLetters={function() { setShowLetters(true); }}
+          myMessageCount={messages.filter(function(m) { return m.sender === 'me'; }).length}
+          totalMessages={messages.length}
+          sessionStartTime={sessionStartTime}
         />
       )}
     </div>

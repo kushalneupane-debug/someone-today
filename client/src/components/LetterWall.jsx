@@ -13,6 +13,7 @@ export default function LetterWall({ onBack }) {
   var [writeType, setWriteType] = useState("letter");
   var [page, setPage] = useState(0);
   var [hasMore, setHasMore] = useState(false);
+  var [copiedId, setCopiedId] = useState(null);
   var tags = ["all","lonely","anxious","sad","lost","overwhelmed","angry","numb","grateful","hopeful","healing"];
 
   function fetchLetters(tagFilter, pageNum) {
@@ -36,6 +37,20 @@ export default function LetterWall({ onBack }) {
     fetch("/api/letters/" + letterId + "/heart", { method: "POST" }).then(function(r) { return r.json(); }).then(function(data) {
       setLetters(function(prev) { return prev.map(function(l) { if (l.id === letterId) return Object.assign({}, l, { hearts: data.hearts }); return l; }); });
     });
+  }
+
+  function shareLetter(letter, e) {
+    e.stopPropagation();
+    var preview = letter.text.length > 160 ? letter.text.slice(0, 160) + '…' : letter.text;
+    var shareText = '"' + preview + '"\n\n— anonymous on getsomeonetoday.com/letters';
+    if (navigator.share) {
+      navigator.share({ text: shareText, url: 'https://getsomeonetoday.com' }).catch(function() {});
+    } else {
+      navigator.clipboard.writeText(shareText).then(function() {
+        setCopiedId(letter.id);
+        setTimeout(function() { setCopiedId(null); }, 2000);
+      }).catch(function() {});
+    }
   }
 
   function timeAgo(ts) {
@@ -150,6 +165,12 @@ export default function LetterWall({ onBack }) {
                       <div className="flex items-center gap-4">
                         <button onClick={function(e) { handleHeart(letter.id, e); }} className="heart-btn flex items-center gap-1.5 text-gray-500 hover:text-rose-400 transition-colors"><span className="text-sm">{"\u2665"}</span><span className="text-xs">{letter.hearts || 0}</span></button>
                         <div className="flex items-center gap-1.5 text-gray-600"><span className="text-xs">{"\uD83D\uDCAC"}</span><span className="text-xs">{letter.replyCount || 0}</span></div>
+                        <button onClick={function(e) { shareLetter(letter, e); }} className="flex items-center gap-1 text-gray-600 hover:text-emerald-400 transition-colors" title="Share this letter">
+                          {copiedId === letter.id
+                            ? <span className="text-[10px] text-emerald-400">Copied!</span>
+                            : <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185z" /></svg>
+                          }
+                        </button>
                       </div>
                     </div>
                   </div>
