@@ -4,7 +4,7 @@
 
 @layer base {
   html { font-family: 'Inter', system-ui, -apple-system, sans-serif; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
-  body { background: #04040a; color: #e8e8f0; overflow-x: hidden; }
+  body { background: #05050f; color: #deded0; overflow-x: hidden; background-image: radial-gradient(ellipse 100% 55% at 50% 0%, rgba(16,185,129,0.06) 0%, transparent 70%); }
 
   /* Accessible focus rings */
   :focus-visible { outline: 2px solid rgba(52,211,153,0.7); outline-offset: 3px; border-radius: 6px; }
@@ -31,10 +31,16 @@
 
 /* ── Typography ── */
 .font-display { font-family: 'Cormorant Garamond', Georgia, serif; }
-.text-display-xl { font-family: 'Cormorant Garamond', serif; font-size: clamp(3.5rem,10vw,7rem); font-weight: 300; line-height: 1.04; letter-spacing: -0.02em; }
-.text-display-lg { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.5rem,7vw,5rem); font-weight: 300; line-height: 1.1; letter-spacing: -0.015em; }
-.text-display-md { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem,5vw,3rem); font-weight: 300; line-height: 1.15; }
-.text-label { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; }
+.text-display-xl { font-family: 'Cormorant Garamond', serif; font-size: clamp(3.8rem,10vw,7.5rem); font-weight: 400; line-height: 1.06; letter-spacing: -0.02em; }
+.text-display-lg { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.6rem,7vw,5.2rem); font-weight: 400; line-height: 1.1; letter-spacing: -0.015em; }
+.text-display-md { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.9rem,5vw,3.2rem); font-weight: 400; line-height: 1.15; }
+.text-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; }
+
+/* ── Readable text color layers ── */
+.t-body  { color: #b2b2cc; line-height: 1.78; }
+.t-muted { color: #787892; }
+.t-faint { color: #52526a; }
+.t-accent { color: #34d399; }
 
 /* ── Ambient / Glow ── */
 .orb { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; }
@@ -52,24 +58,26 @@
 
 /* ── Glass cards ── */
 .glass {
-  background: rgba(255,255,255,0.025);
+  background: rgba(255,255,255,0.03);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.09);
   border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 24px rgba(0,0,0,0.3);
   transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
 }
 .glass:hover {
-  border-color: rgba(16,185,129,0.2);
-  box-shadow: 0 0 0 1px rgba(16,185,129,0.06), 0 16px 48px rgba(0,0,0,0.5);
-  transform: translateY(-1px);
+  border-color: rgba(16,185,129,0.28);
+  box-shadow: 0 0 0 1px rgba(16,185,129,0.08), 0 20px 56px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08);
+  transform: translateY(-2px);
 }
 .glass-strong {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.045);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 24px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.45);
 }
 
 /* ── Gradient text ── */
@@ -107,9 +115,9 @@
 .btn-primary:active { transform: translateY(0) scale(0.99); }
 
 .btn-ghost {
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.75);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.82);
+  border: 1px solid rgba(255,255,255,0.13);
   border-radius: 14px;
   font-weight: 400;
   font-size: 0.95rem;
@@ -118,10 +126,11 @@
   cursor: pointer;
 }
 .btn-ghost:hover {
-  background: rgba(255,255,255,0.07);
-  border-color: rgba(16,185,129,0.3);
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(16,185,129,0.38);
   color: #fff;
   transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
 
 /* ── Divider ── */
@@ -130,13 +139,14 @@
 /* ── Pill / badge ── */
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(16,185,129,0.08);
-  border: 1px solid rgba(16,185,129,0.2);
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.28);
   border-radius: 999px;
-  padding: 5px 14px;
+  padding: 6px 16px;
   font-size: 0.75rem;
-  color: rgba(52,211,153,0.9);
+  color: #34d399;
   letter-spacing: 0.05em;
+  box-shadow: 0 0 20px rgba(16,185,129,0.08);
 }
 .pill-dot {
   width: 6px; height: 6px; border-radius: 50%;

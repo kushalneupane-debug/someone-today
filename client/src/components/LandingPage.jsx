@@ -89,8 +89,8 @@ function ChatPreview() {
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#04040a]" />
           </div>
           <div className="flex-1">
-            <p className="text-white/75 text-sm font-medium leading-none">Anonymous listener</p>
-            <p className="text-emerald-400/60 text-[11px] mt-1">● Online · matched in 8s</p>
+            <p className="text-white/88 text-sm font-medium leading-none">Anonymous listener</p>
+            <p className="text-emerald-400/85 text-[11px] mt-1">● Online · matched in 8s</p>
           </div>
           <span className="text-white/15 text-sm">🔒</span>
         </div>
@@ -102,7 +102,7 @@ function ChatPreview() {
                 <div className={'max-w-[82%] px-3.5 py-2 rounded-2xl text-sm font-light leading-relaxed ' +
                   (msg.from === 'me'
                     ? 'bg-emerald-500/15 border border-emerald-500/20 text-white/80 rounded-br-sm'
-                    : 'bg-white/[0.05] border border-white/[0.07] text-white/60 rounded-bl-sm')}>
+                    : 'bg-white/[0.05] border border-white/[0.07] text-white/78 rounded-bl-sm')}>
                   {msg.text}
                 </div>
               </div>
@@ -117,7 +117,7 @@ function ChatPreview() {
           )}
         </div>
         <div className="px-5 py-3 border-t border-white/[0.04] bg-black/20">
-          <p className="text-white/15 text-[10px] text-center font-light">Nothing is saved · Disappears when you leave</p>
+          <p className="text-white/45 text-[10px] text-center font-light">Nothing is saved · Disappears when you leave</p>
         </div>
       </div>
     </div>
@@ -187,7 +187,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           <div className="space-y-2">
             <p className="text-label text-emerald-400/60">Step 1 of 2</p>
             <h2 className="text-display-md text-white">How are you feeling right now?</h2>
-            <p className="text-white/40 text-sm font-light">This helps your listener understand where you are.</p>
+            <p className="text-white/65 text-sm font-light">This helps your listener understand where you are.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {moods.map(function(m) {
@@ -222,7 +222,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           <div className="space-y-2">
             <p className="text-label text-emerald-400/60">{role==='seeker'?'Step 2 of 2':'Step 1 of 1'}</p>
             <h2 className="text-display-md text-white">How long do you have?</h2>
-            <p className="text-white/40 text-sm font-light">You can always leave early — no pressure.</p>
+            <p className="text-white/65 text-sm font-light">You can always leave early — no pressure.</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[15,30].map(function(d) {
@@ -256,10 +256,10 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <span className="pill-dot animate-pulse-soft" />
           {totalSessions > 0
-            ? <p className="text-xs text-white/40 font-light"><span className="text-emerald-400 font-medium">{totalSessions.toLocaleString()}</span> conversations have happened here — <span className="text-white/60">be part of one</span></p>
-            : <p className="text-xs text-white/40 font-light">A quiet space for real conversations. No sign-up needed.</p>
+            ? <p className="text-xs text-white/65 font-light"><span className="text-emerald-400 font-medium">{totalSessions.toLocaleString()}</span> conversations have happened here — <span className="text-white/80">be part of one</span></p>
+            : <p className="text-xs text-white/65 font-light">A quiet space for real conversations. No sign-up needed.</p>
           }
-          {activeCount > 0 && <span className="text-[10px] text-emerald-400/40">· {activeCount} happening right now</span>}
+          {activeCount > 0 && <span className="text-[10px] text-emerald-400/70">· {activeCount} happening right now</span>}
         </div>
       </div>
 
@@ -291,7 +291,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           </div>
 
           {/* Subheadline */}
-          <p className="text-white/60 text-lg sm:text-xl font-light leading-relaxed max-w-lg mx-auto lg:mx-0 animate-slide-up" style={{animationDelay:'0.3s'}}>
+          <p className="text-white/80 text-lg sm:text-xl font-light leading-relaxed max-w-lg mx-auto lg:mx-0 animate-slide-up" style={{animationDelay:'0.3s'}}>
             Talk to a real person. Right now. No profiles, no history, no algorithms.
             Just two humans being present for each other.
           </p>
@@ -328,7 +328,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
               </div>
               <div className="flex-1 text-left">
                 <p className="text-white font-medium text-sm group-hover:text-emerald-300 transition-colors">Letters — write what you feel</p>
-                <p className="text-white/35 text-xs mt-0.5 font-light">Anonymous. Someone will reply with kindness.</p>
+                <p className="text-white/60 text-xs mt-0.5 font-light">Anonymous. Someone will reply with kindness.</p>
               </div>
               <svg className="w-4 h-4 text-white/20 group-hover:text-emerald-400 transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
@@ -357,7 +357,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
               return (
                 <div key={label} className="flex items-center gap-2">
                   <span className="w-1 h-1 rounded-full bg-emerald-400/50 flex-shrink-0" />
-                  <span className="text-white/38 text-xs font-light tracking-wide">{label}</span>
+                  <span className="text-white/55 text-xs font-light tracking-wide">{label}</span>
                 </div>
               );
             })}
@@ -401,7 +401,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
                 <div className="stat-number text-gradient-emerald">
                   {s.animated ? <AnimatedCounter target={s.value} /> : s.value}
                 </div>
-                <p className="text-label text-white/25">{s.label}</p>
+                <p className="text-label text-white/55">{s.label}</p>
               </div>
             );
           })}
@@ -413,9 +413,9 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       <section className="relative z-10 px-5 py-16 sm:py-24 scroll-hidden">
         <div className="max-w-4xl mx-auto space-y-14">
           <div className="text-center space-y-4">
-            <p className="text-label text-emerald-400/50">Why it works</p>
+            <p className="text-label text-emerald-400/75">Why it works</p>
             <h2 className="text-display-lg text-white">Quiet by design.</h2>
-            <p className="text-white/35 font-light max-w-md mx-auto">Not a social network. Not therapy. A quiet space between those two things.</p>
+            <p className="text-white/60 font-light max-w-md mx-auto">Not a social network. Not therapy. A quiet space between those two things.</p>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="glass p-7 space-y-4 scroll-hidden stagger-1">
@@ -423,28 +423,28 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
               </div>
               <h3 className="text-white font-medium text-base">Completely anonymous</h3>
-              <p className="text-white/55 text-sm font-light leading-relaxed">No accounts. No names. No traces. Just two humans sharing a moment, then moving on.</p>
+              <p className="text-white/75 text-sm font-light leading-relaxed">No accounts. No names. No traces. Just two humans sharing a moment, then moving on.</p>
             </div>
             <div className="glass p-7 space-y-4 scroll-hidden stagger-2">
               <div className="feature-icon w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-emerald-400/80">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
               </div>
               <h3 className="text-white font-medium text-base">Nothing is ever saved</h3>
-              <p className="text-white/55 text-sm font-light leading-relaxed">Conversations exist only in the moment. When you leave, it's gone. Like it never happened.</p>
+              <p className="text-white/75 text-sm font-light leading-relaxed">Conversations exist only in the moment. When you leave, it's gone. Like it never happened.</p>
             </div>
             <div className="glass p-7 space-y-4 scroll-hidden stagger-3">
               <div className="feature-icon w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-emerald-400/80">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="3"/><circle cx="15" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6"/></svg>
               </div>
               <h3 className="text-white font-medium text-base">Real humans only</h3>
-              <p className="text-white/55 text-sm font-light leading-relaxed">No AI. No bots. No algorithms deciding who you talk to. A real person who actually cares.</p>
+              <p className="text-white/75 text-sm font-light leading-relaxed">No AI. No bots. No algorithms deciding who you talk to. A real person who actually cares.</p>
             </div>
             <div className="glass p-7 space-y-4 scroll-hidden stagger-4">
               <div className="feature-icon w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-emerald-400/80">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3L4 7v5c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V7l-8-4z"/></svg>
               </div>
               <h3 className="text-white font-medium text-base">A safe space</h3>
-              <p className="text-white/55 text-sm font-light leading-relaxed">Community guidelines, abuse reporting, and a culture of kindness built into every interaction.</p>
+              <p className="text-white/75 text-sm font-light leading-relaxed">Community guidelines, abuse reporting, and a culture of kindness built into every interaction.</p>
             </div>
           </div>
         </div>
@@ -456,9 +456,9 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           <div className="glass-strong p-8 sm:p-12 relative overflow-hidden">
             <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-8">
               <div className="flex-1 space-y-4">
-                <p className="text-label text-emerald-400/50">New feature</p>
+                <p className="text-label text-emerald-400/75">New feature</p>
                 <h2 className="text-display-md text-white">Letters</h2>
-                <p className="text-white/45 font-light leading-relaxed text-base max-w-lg">
+                <p className="text-white/70 font-light leading-relaxed text-base max-w-lg">
                   Write what's on your heart at 3am. Someone will read it and reply with kindness.
                   No sign-up. No judgment. Just you and your words — and someone out there who genuinely cares.
                 </p>
@@ -480,7 +480,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       <section className="relative z-10 px-5 py-16 sm:py-24 scroll-hidden">
         <div className="max-w-4xl mx-auto space-y-14">
           <div className="text-center space-y-4">
-            <p className="text-label text-emerald-400/50">Simple by design</p>
+            <p className="text-label text-emerald-400/75">Simple by design</p>
             <h2 className="text-display-lg text-white">How it works.</h2>
           </div>
           <div className="relative grid sm:grid-cols-3 gap-6 sm:gap-10">
@@ -499,7 +499,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
                     <div className="flex-1 h-px bg-white/[0.04] sm:hidden" />
                   </div>
                   <h3 className="text-white font-medium text-base">{s.title}</h3>
-                  <p className="text-white/50 text-sm font-light leading-relaxed">{s.desc}</p>
+                  <p className="text-white/70 text-sm font-light leading-relaxed">{s.desc}</p>
                 </div>
               );
             })}
@@ -511,14 +511,14 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       <section className="relative z-10 px-5 py-16 sm:py-24 scroll-hidden">
         <div className="max-w-2xl mx-auto space-y-12 text-center">
           <div className="space-y-4">
-            <p className="text-label text-emerald-400/50">Real people, real moments</p>
+            <p className="text-label text-emerald-400/75">Real people, real moments</p>
             <h2 className="text-display-lg text-white">What people are saying.</h2>
           </div>
           <div className="relative min-h-[180px] flex items-center justify-center">
             <div key={testimonialIndex} className="animate-fade-in glass p-8 sm:p-10 max-w-lg mx-auto w-full">
               <div className="font-display text-5xl text-emerald-500/15 leading-none mb-5 text-left">"</div>
-              <p className="text-white/65 text-lg sm:text-xl font-display font-light italic leading-relaxed">{testimonials[testimonialIndex].text}</p>
-              <p className="text-emerald-400/40 text-xs font-light mt-5 tracking-wider">— {testimonials[testimonialIndex].from}</p>
+              <p className="text-white/85 text-lg sm:text-xl font-display font-light italic leading-relaxed">{testimonials[testimonialIndex].text}</p>
+              <p className="text-emerald-400/70 text-xs font-light mt-5 tracking-wider">— {testimonials[testimonialIndex].from}</p>
             </div>
           </div>
           <div className="flex gap-2 justify-center">
@@ -536,7 +536,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       <section className="relative z-10 px-5 py-16 sm:py-24 scroll-hidden">
         <div className="max-w-4xl mx-auto space-y-14">
           <div className="text-center space-y-4">
-            <p className="text-label text-emerald-400/50">On the horizon</p>
+            <p className="text-label text-emerald-400/75">On the horizon</p>
             <h2 className="text-display-lg text-white">What's coming next.</h2>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
@@ -559,7 +559,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
                       <h3 className="text-white font-medium text-sm">{item.title}</h3>
                       <span className="text-[9px] px-2 py-0.5 rounded-full font-medium" style={{background:colors[item.color],border:'1px solid '+borders[item.color],color:texts[item.color]}}>{item.tag}</span>
                     </div>
-                    <p className="text-white/35 text-xs font-light leading-relaxed">{item.desc}</p>
+                    <p className="text-white/62 text-xs font-light leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               );
@@ -574,7 +574,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
         <div className="max-w-2xl mx-auto text-center space-y-10 relative z-10">
           <div className="space-y-4">
             <h2 className="text-display-xl text-white">Ready to talk<br /><span className="text-gradient-emerald italic">to someone?</span></h2>
-            <p className="text-white/35 font-light text-lg">10 seconds to connect. No sign-up needed. Just show up.</p>
+            <p className="text-white/62 font-light text-lg">10 seconds to connect. No sign-up needed. Just show up.</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-xs mx-auto sm:max-w-none">
             <button onClick={function(){setRole('seeker');setStep('mood');}} className="btn-primary text-base px-10 py-4">
@@ -598,7 +598,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Crisis */}
           <div className="glass p-5 max-w-lg mx-auto text-center">
-            <p className="text-white/30 text-sm font-light leading-relaxed">
+            <p className="text-white/60 text-sm font-light leading-relaxed">
               <span className="mr-1.5">💛</span>
               Someone Today is peer support, not a crisis service. If you're in danger, call{' '}
               <a href="tel:988" className="text-emerald-400 hover:text-emerald-300 transition-colors">988</a>
