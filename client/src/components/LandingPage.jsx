@@ -20,19 +20,18 @@ var testimonials = [
 ];
 
 var tickerMsgs = [
-  '💬 Someone just opened a conversation',
-  '✉ New letter posted on the wall',
-  '🤝 Two people just connected',
-  '💬 "Thank you — I really needed this"',
-  '🌙 A late-night conversation just ended',
-  '✉ A listener replied with kindness',
-  '💬 Someone felt heard for the first time tonight',
-  '🤝 A new listener just joined',
-  '💬 Someone said they feel better now',
-  '✉ An anonymous letter brought someone to tears (good ones)',
+  'Someone just opened a conversation',
+  'New letter posted on the wall',
+  'Two people just connected',
+  '"Thank you — I really needed this"',
+  'A late-night conversation just ended',
+  'A listener replied with kindness',
+  'Someone felt heard for the first time tonight',
+  'A new listener just joined',
+  'Someone said they feel better now',
+  'An anonymous letter brought someone to tears — the good kind',
 ];
 
-var floatWords = ['heard','safe','real','present','human','here','understood','seen','together','gentle','ok','known'];
 
 function AnimatedCounter({ target, duration = 2000 }) {
   var [count, setCount] = useState(0);
@@ -249,10 +248,8 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   return (
     <div className="min-h-screen bg-[#04040a] text-white overflow-x-hidden">
 
-      {/* Ambient orbs — hero orb follows mouse */}
-      <div className="orb orb-emerald" style={{width:'900px',height:'900px',top:'-250px',left:'50%',transform:`translateX(calc(-50% + ${mousePos.x}px)) translateY(${mousePos.y}px)`,opacity:0.7,zIndex:0,transition:'transform 0.5s ease-out'}} />
-      <div className="orb orb-purple orb-animate-slow" style={{width:'600px',height:'600px',bottom:'20%',left:'-200px',zIndex:0}} />
-      <div className="orb orb-teal orb-animate"  style={{width:'400px',height:'400px',top:'40%',right:'-100px',zIndex:0,animationDelay:'10s'}} />
+      {/* Ambient orb — follows mouse */}
+      <div className="orb orb-emerald" style={{width:'800px',height:'800px',top:'-200px',left:'50%',transform:`translateX(calc(-50% + ${mousePos.x}px)) translateY(${mousePos.y}px)`,opacity:0.45,zIndex:0,transition:'transform 0.6s ease-out'}} />
 
       {/* Live stats bar */}
       <div className="relative z-10 w-full border-b border-white/[0.05] py-2.5 px-4 bg-black/20 backdrop-blur-sm">
@@ -268,17 +265,6 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
 
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-5 pt-12 pb-20 overflow-hidden">
-        {/* Floating emotion words */}
-        <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
-          {floatWords.map(function(word, i) {
-            return (
-              <span key={word} className="word-float font-display italic"
-                style={{left:((i*8+5)%90)+'%',fontSize:(1.0+(i%4)*0.45)+'rem',animationDuration:(17+(i*2.7)%21)+'s',animationDelay:((i*1.9)%11)+'s'}}>
-                {word}
-              </span>
-            );
-          })}
-        </div>
         <div className="hero-glow" />
 
         <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
@@ -366,12 +352,12 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           </div>
 
           {/* Trust row */}
-          <div className="flex items-center justify-center lg:justify-start gap-6 flex-wrap animate-slide-up" style={{animationDelay:'0.5s'}}>
-            {[['🔒','Private'],['🗑️','Nothing saved'],['👤','Anonymous'],['🤝','Real humans']].map(function(item) {
+          <div className="flex items-center justify-center lg:justify-start gap-5 flex-wrap animate-slide-up" style={{animationDelay:'0.5s'}}>
+            {['Private','Nothing saved','Anonymous','Real humans'].map(function(label) {
               return (
-                <div key={item[1]} className="flex items-center gap-1.5">
-                  <span className="text-sm opacity-60">{item[0]}</span>
-                  <span className="text-white/45 text-xs font-light">{item[1]}</span>
+                <div key={label} className="flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-emerald-400/50 flex-shrink-0" />
+                  <span className="text-white/38 text-xs font-light tracking-wide">{label}</span>
                 </div>
               );
             })}
@@ -405,10 +391,10 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
         <div className="divider-glow mb-16" />
         <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
           {[
-            { value: totalSessions > 0 ? totalSessions : '—', label: 'Conversations', animated: totalSessions > 0 },
-            { value: '0',    label: 'Profiles created' },
-            { value: '100%', label: 'Anonymous' },
-            { value: '∞',    label: 'Kindness' },
+            { value: totalSessions > 0 ? totalSessions : '—', label: 'conversations', animated: totalSessions > 0 },
+            { value: '0',    label: 'data stored, ever' },
+            { value: '100%', label: 'free, always' },
+            { value: '∞',    label: 'kindness' },
           ].map(function(s, i) {
             return (
               <div key={i} className={'space-y-2 stagger-' + (i+1)}>
@@ -428,26 +414,38 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
         <div className="max-w-4xl mx-auto space-y-14">
           <div className="text-center space-y-4">
             <p className="text-label text-emerald-400/50">Why it works</p>
-            <h2 className="text-display-lg text-white">Built different.</h2>
+            <h2 className="text-display-lg text-white">Quiet by design.</h2>
             <p className="text-white/35 font-light max-w-md mx-auto">Not a social network. Not therapy. A quiet space between those two things.</p>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            {[
-              { icon:'👤', title:'Completely anonymous', desc:'No accounts. No names. No traces. Just two humans sharing a moment, then moving on.' },
-              { icon:'🗑️', title:'Nothing is ever saved', desc:'Conversations exist only in the moment. When you leave, it\'s gone. Like it never happened.' },
-              { icon:'🤝', title:'Real humans only', desc:'No AI. No bots. No algorithms deciding who you talk to. A real person who actually cares.' },
-              { icon:'🛡️', title:'A safe space', desc:'Community guidelines, abuse reporting, and a culture of kindness built into every interaction.' },
-            ].map(function(f, i) {
-              return (
-                <div key={i} className={'glass p-7 space-y-4 scroll-hidden stagger-' + (i+1)}>
-                  <div className="feature-icon w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-lg">
-                    {f.icon}
-                  </div>
-                  <h3 className="text-white font-medium text-base">{f.title}</h3>
-                  <p className="text-white/55 text-sm font-light leading-relaxed">{f.desc}</p>
-                </div>
-              );
-            })}
+            <div className="glass p-7 space-y-4 scroll-hidden stagger-1">
+              <div className="feature-icon w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-emerald-400/80">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              </div>
+              <h3 className="text-white font-medium text-base">Completely anonymous</h3>
+              <p className="text-white/55 text-sm font-light leading-relaxed">No accounts. No names. No traces. Just two humans sharing a moment, then moving on.</p>
+            </div>
+            <div className="glass p-7 space-y-4 scroll-hidden stagger-2">
+              <div className="feature-icon w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-emerald-400/80">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </div>
+              <h3 className="text-white font-medium text-base">Nothing is ever saved</h3>
+              <p className="text-white/55 text-sm font-light leading-relaxed">Conversations exist only in the moment. When you leave, it's gone. Like it never happened.</p>
+            </div>
+            <div className="glass p-7 space-y-4 scroll-hidden stagger-3">
+              <div className="feature-icon w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-emerald-400/80">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="7" r="3"/><circle cx="15" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6"/></svg>
+              </div>
+              <h3 className="text-white font-medium text-base">Real humans only</h3>
+              <p className="text-white/55 text-sm font-light leading-relaxed">No AI. No bots. No algorithms deciding who you talk to. A real person who actually cares.</p>
+            </div>
+            <div className="glass p-7 space-y-4 scroll-hidden stagger-4">
+              <div className="feature-icon w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center text-emerald-400/80">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3L4 7v5c0 5 3.5 9.7 8 11 4.5-1.3 8-6 8-11V7l-8-4z"/></svg>
+              </div>
+              <h3 className="text-white font-medium text-base">A safe space</h3>
+              <p className="text-white/55 text-sm font-light leading-relaxed">Community guidelines, abuse reporting, and a culture of kindness built into every interaction.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -456,12 +454,6 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       <section className="relative z-10 px-5 py-16 sm:py-24 scroll-hidden">
         <div className="max-w-4xl mx-auto">
           <div className="glass-strong p-8 sm:p-12 relative overflow-hidden">
-            {/* Background letters decoration */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5">
-              {['✉', '✉', '✉'].map(function(l, i) {
-                return <span key={i} className="absolute text-6xl text-emerald-400 letter-float font-display italic" style={{top:(i*30)+'%',left:(i*35)+'%',animationDuration:(8+i*4)+'s',animationDelay:(i*3)+'s'}}>{l}</span>;
-              })}
-            </div>
             <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-8">
               <div className="flex-1 space-y-4">
                 <p className="text-label text-emerald-400/50">New feature</p>
@@ -549,18 +541,18 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             {[
-              { color:'purple', icon:'🎙️', title:'Voice sessions', tag:'COMING SOON', desc:'Sometimes typing isn\'t enough. Optional voice for deeper connection.' },
-              { color:'blue',   icon:'🌍', title:'Multi-language', tag:'PLANNED', desc:'Support in multiple languages so everyone can find someone who understands.' },
-              { color:'amber',  icon:'⭐', title:'Listener recognition', tag:'PLANNED', desc:'Anonymous badges for listeners who show up consistently. Presence matters.' },
-              { color:'rose',   icon:'📱', title:'Mobile app', tag:'EXPLORING', desc:'A dedicated app so you can be there for someone even on the go.' },
+              { color:'purple', svg:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3M8 22h8"/></svg>, title:'Voice sessions', tag:'COMING SOON', desc:'Sometimes typing isn\'t enough. Optional voice for deeper connection.' },
+              { color:'blue',   svg:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20"/></svg>, title:'Multi-language', tag:'PLANNED', desc:'Support in multiple languages so everyone can find someone who understands.' },
+              { color:'amber',  svg:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, title:'Listener recognition', tag:'PLANNED', desc:'Anonymous badges for listeners who show up consistently. Presence matters.' },
+              { color:'rose',   svg:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>, title:'Mobile app', tag:'EXPLORING', desc:'A dedicated app so you can be there for someone even on the go.' },
             ].map(function(item, i) {
               var colors = { purple:'rgba(124,58,237,0.08)', blue:'rgba(59,130,246,0.08)', amber:'rgba(245,158,11,0.08)', rose:'rgba(244,63,94,0.08)' };
               var borders = { purple:'rgba(124,58,237,0.2)', blue:'rgba(59,130,246,0.2)', amber:'rgba(245,158,11,0.2)', rose:'rgba(244,63,94,0.2)' };
               var texts = { purple:'#a78bfa', blue:'#60a5fa', amber:'#fbbf24', rose:'#fb7185' };
               return (
                 <div key={i} className={'glass p-6 flex items-start gap-4 scroll-hidden stagger-' + (i+1)}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{background:colors[item.color],border:'1px solid '+borders[item.color]}}>
-                    {item.icon}
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{background:colors[item.color],border:'1px solid '+borders[item.color],color:texts[item.color]}}>
+                    {item.svg}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">

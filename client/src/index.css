@@ -3,8 +3,11 @@
 @tailwind utilities;
 
 @layer base {
-  html { font-family: 'Inter', system-ui, -apple-system, sans-serif; scroll-behavior: smooth; }
+  html { font-family: 'Inter', system-ui, -apple-system, sans-serif; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
   body { background: #04040a; color: #e8e8f0; overflow-x: hidden; }
+
+  /* Accessible focus rings */
+  :focus-visible { outline: 2px solid rgba(52,211,153,0.7); outline-offset: 3px; border-radius: 6px; }
 
   /* Premium scrollbar */
   ::-webkit-scrollbar { width: 3px; }
@@ -57,9 +60,9 @@
   transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
 }
 .glass:hover {
-  border-color: rgba(16,185,129,0.22);
-  box-shadow: 0 0 40px rgba(16,185,129,0.06), 0 20px 60px rgba(0,0,0,0.4);
-  transform: translateY(-2px);
+  border-color: rgba(16,185,129,0.2);
+  box-shadow: 0 0 0 1px rgba(16,185,129,0.06), 0 16px 48px rgba(0,0,0,0.5);
+  transform: translateY(-1px);
 }
 .glass-strong {
   background: rgba(255,255,255,0.04);
@@ -182,16 +185,13 @@
 @keyframes letterFloat { 0%,100%{transform:translateY(0) rotate(0deg); opacity:0.03} 50%{transform:translateY(-30px) rotate(5deg); opacity:0.06} }
 .letter-float { animation: letterFloat linear infinite; }
 
-/* ── Floating emotion words ── */
-.word-float { color: rgba(255,255,255,1); user-select: none; pointer-events: none; position: absolute; bottom: -40px; animation: wordFloat linear infinite; white-space: nowrap; }
-@keyframes wordFloat { 0%{transform:translateY(0);opacity:0} 6%{opacity:1} 88%{opacity:0.6} 100%{transform:translateY(-115vh);opacity:0} }
-@media(prefers-reduced-motion:reduce){.word-float{display:none}}
 
 /* ── Social proof ticker ── */
 .ticker-wrap { overflow: hidden; }
 .ticker-track { display: inline-flex; white-space: nowrap; animation: tickerScroll 50s linear infinite; }
 .ticker-track:hover { animation-play-state: paused; }
-.ticker-item { display: inline-flex; align-items: center; gap: 8px; padding: 0 36px; font-size: 0.68rem; color: rgba(255,255,255,0.18); letter-spacing: 0.05em; white-space: nowrap; }
+.ticker-item { display: inline-flex; align-items: center; gap: 8px; padding: 0 36px; font-size: 0.68rem; color: rgba(255,255,255,0.22); letter-spacing: 0.06em; white-space: nowrap; }
+.ticker-item + .ticker-item::before { content: '·'; margin-right: -20px; color: rgba(16,185,129,0.3); }
 @keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
 @media(prefers-reduced-motion:reduce){.ticker-track{animation:none}}
 
