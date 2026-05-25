@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import CommunityPromise from './CommunityPromise';
+import Navbar from './Navbar';
 
 var moods = [
   { emoji: '😔', label: 'Feeling down', value: 'down' },
@@ -124,7 +125,7 @@ function ChatPreview() {
   );
 }
 
-export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onShowPrivacy, onShowTerms, onShowLetters }) {
+export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onShowPrivacy, onShowTerms, onShowLetters, onShowAbout, onShowBreathe }) {
   var [step, setStep] = useState('role');
   var [role, setRole] = useState(null);
   var [duration, setDuration] = useState(15);
@@ -248,6 +249,14 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
   return (
     <div className="min-h-screen bg-[#04040a] text-white overflow-x-hidden">
 
+      {/* ── NAV ── */}
+      <Navbar
+        onShowLetters={onShowLetters}
+        onShowAbout={onShowAbout}
+        onShowBreathe={onShowBreathe}
+        onTalkWithSomeone={function() { window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+      />
+
       {/* Ambient orb — follows mouse */}
       <div className="orb orb-emerald" style={{width:'800px',height:'800px',top:'-200px',left:'50%',transform:`translateX(calc(-50% + ${mousePos.x}px)) translateY(${mousePos.y}px)`,opacity:0.45,zIndex:0,transition:'transform 0.6s ease-out'}} />
 
@@ -264,7 +273,7 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       </div>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-5 pt-12 pb-20 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-5 pt-28 pb-20 overflow-hidden">
         <div className="hero-glow" />
 
         <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
@@ -594,29 +603,53 @@ export default function LandingPage({ onJoin, pushEnabled, onSubscribePush, onSh
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="relative z-10 px-5 py-12 border-t border-white/[0.05]">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Crisis */}
-          <div className="glass p-5 max-w-lg mx-auto text-center">
-            <p className="text-white/60 text-sm font-light leading-relaxed">
-              <span className="mr-1.5">💛</span>
+      <footer className="relative z-10 px-5 py-16 border-t border-white/[0.08]">
+        <div className="max-w-4xl mx-auto space-y-12">
+
+          {/* Brand block */}
+          <div className="text-center space-y-3">
+            <div className="flex items-center justify-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              </div>
+              <span className="font-display text-xl text-white/80 tracking-tight">Someone Today</span>
+            </div>
+            <p className="text-white/45 text-sm font-light">A quiet space for real human connection.</p>
+          </div>
+
+          {/* Footer nav links */}
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {[
+              { label: 'Our Promise', action: function(){ setShowPromise(true); } },
+              { label: 'Privacy Policy', action: onShowPrivacy },
+              { label: 'Terms of Service', action: onShowTerms },
+              { label: 'Letters', action: onShowLetters },
+              { label: 'About', action: onShowAbout },
+              { label: 'Breathe', action: onShowBreathe },
+            ].map(function(item, i, arr) {
+              return (
+                <span key={item.label} className="flex items-center gap-2">
+                  <button onClick={item.action}
+                    className="text-sm text-white/55 hover:text-emerald-400 transition-colors duration-200 font-light px-1 py-0.5">
+                    {item.label}
+                  </button>
+                  {i < arr.length - 1 && <span className="text-white/15 text-xs">·</span>}
+                </span>
+              );
+            })}
+          </div>
+
+          {/* Crisis notice */}
+          <div className="glass p-5 sm:p-6 max-w-xl mx-auto text-center">
+            <p className="text-white/65 text-sm font-light leading-relaxed">
               Someone Today is peer support, not a crisis service. If you're in danger, call{' '}
-              <a href="tel:988" className="text-emerald-400 hover:text-emerald-300 transition-colors">988</a>
+              <a href="tel:988" className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium">988</a>
               {' '}or text HOME to{' '}
-              <a href="sms:741741&body=HOME" className="text-emerald-400 hover:text-emerald-300 transition-colors">741741</a>.
+              <a href="sms:741741&body=HOME" className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium">741741</a>.
             </p>
           </div>
 
-          {/* Links */}
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <button onClick={function(){setShowPromise(true);}} className="text-[11px] text-white/20 hover:text-white/50 transition-colors">Our Promise</button>
-            <span className="text-white/10">·</span>
-            <button onClick={onShowPrivacy} className="text-[11px] text-white/20 hover:text-white/50 transition-colors">Privacy</button>
-            <span className="text-white/10">·</span>
-            <button onClick={onShowTerms} className="text-[11px] text-white/20 hover:text-white/50 transition-colors">Terms</button>
-          </div>
-
-          <p className="text-center text-white/10 text-xs">© 2026 Someone Today — made with quiet intention.</p>
+          <p className="text-center text-white/25 text-xs font-light">© 2026 Someone Today — made with quiet intention.</p>
         </div>
       </footer>
     </div>

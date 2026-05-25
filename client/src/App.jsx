@@ -9,6 +9,8 @@ import CrisisRedirection from './components/CrisisRedirection';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import LetterWall from './components/LetterWall';
+import AboutPage from './components/AboutPage';
+import BreathePage from './components/BreathePage';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
@@ -31,6 +33,8 @@ function App() {
   const [extensionUsed, setExtensionUsed] = useState(false);
   const [extensionConfirmed, setExtensionConfirmed] = useState(false);
   const [showLetters, setShowLetters] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const [showBreathe, setShowBreathe] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState(null);
   const socketRef = useRef(null);
   const roleRef = useRef(null);
@@ -181,6 +185,19 @@ function App() {
     return <LetterWall onBack={function() { setShowLetters(false); }} />;
   }
 
+  if (showAbout) {
+    return (
+      <AboutPage
+        onBack={function() { setShowAbout(false); }}
+        onShowLetters={function() { setShowAbout(false); setShowLetters(true); }}
+      />
+    );
+  }
+
+  if (showBreathe) {
+    return <BreathePage onBack={function() { setShowBreathe(false); }} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       {screen === 'landing' && (
@@ -192,8 +209,9 @@ function App() {
           onShowTerms={function() { setShowTerms(true); }}
           onSubscribePush={subscribeToPush}
           pushEnabled={pushEnabled}
-        
-        onShowLetters={function() { setShowLetters(true); }}
+          onShowLetters={function() { setShowLetters(true); }}
+          onShowAbout={function() { setShowAbout(true); }}
+          onShowBreathe={function() { setShowBreathe(true); }}
         />
       )}
       {screen === 'waiting' && (
