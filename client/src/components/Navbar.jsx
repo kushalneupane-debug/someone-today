@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function Navbar({ onShowLetters, onShowAbout, onShowBreathe, onTalkWithSomeone }) {
+export default function Navbar({ onShowLetters, onShowAbout, onShowBreathe, onBegin }) {
   var [scrolled, setScrolled] = useState(false);
   var [mobileOpen, setMobileOpen] = useState(false);
 
@@ -27,7 +27,7 @@ export default function Navbar({ onShowLetters, onShowAbout, onShowBreathe, onTa
     },
     {
       label: 'Talk with Someone',
-      action: onTalkWithSomeone,
+      action: onBegin,
       icon: (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -59,7 +59,7 @@ export default function Navbar({ onShowLetters, onShowAbout, onShowBreathe, onTa
       <div className="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
 
         {/* Brand */}
-        <button onClick={onTalkWithSomeone} className="flex items-center gap-2.5 group flex-shrink-0">
+        <button onClick={onBegin} className="flex items-center gap-2.5 group flex-shrink-0">
           <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-soft" />
           </div>
@@ -72,14 +72,13 @@ export default function Navbar({ onShowLetters, onShowAbout, onShowBreathe, onTa
             return (
               <button key={link.label}
                 onClick={function() { link.action && link.action(); }}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm text-white/50 hover:text-white/90 hover:bg-white/[0.05] transition-all duration-200 font-light">
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm text-white/55 hover:text-white/90 hover:bg-white/[0.05] transition-all duration-200 font-light">
                 <span className="opacity-60">{link.icon}</span>
                 {link.label}
               </button>
             );
           })}
-          <button onClick={onTalkWithSomeone}
-            className="ml-3 btn-primary py-2.5 px-5 text-sm font-medium">
+          <button onClick={onBegin} className="ml-3 btn-primary py-2.5 px-5 text-sm font-medium">
             Begin →
           </button>
         </div>
@@ -112,7 +111,7 @@ export default function Navbar({ onShowLetters, onShowAbout, onShowBreathe, onTa
             );
           })}
           <div className="pt-3 px-1">
-            <button onClick={function() { closeAndRun(onTalkWithSomeone); }}
+            <button onClick={function() { closeAndRun(onBegin); }}
               className="btn-primary w-full py-4 text-sm">
               Begin talking →
             </button>
