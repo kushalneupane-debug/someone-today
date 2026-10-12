@@ -18,6 +18,12 @@ function timeAgo(ts) {
   return Math.floor(hrs / 24) + "d ago";
 }
 
+function copyLetterLink(id, done) {
+  var url = location.origin + "/letter/" + id;
+  var p = navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject();
+  p.then(function() { done(true); }).catch(function() { window.prompt("Copy this link:", url); });
+}
+
 function TypingDots() {
   return <span className="inline-flex items-center gap-1 ml-1" aria-hidden="true"><span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" /></span>;
 }
@@ -35,6 +41,7 @@ export default function LetterDetail({ letterId, onBack, onWrite, presence, onWr
   var [pendingReply, setPendingReply] = useState(null);
   var [affirmation, setAffirmation] = useState("");
   var [hearted, setHearted] = useState(false);
+  var [copied, setCopied] = useState(false);
   var [meToo, setMeToo] = useState(function() { return saidMeToo(letterId); });
   var [report, setReport] = useState("idle"); // idle | confirm | done
   var [firstReply] = useState(function() { return !hasRepliedBefore(); });
@@ -167,6 +174,8 @@ export default function LetterDetail({ letterId, onBack, onWrite, presence, onWr
           <p className="mt-4 text-sm text-ink-faint">
             {mine ? "You wrote this · " : ""}{timeAgo(letter.createdAt)}{isLight ? " · good news" : ""} ·{" "}
             <button onClick={handleHeart} aria-label="Send love" className={"transition-colors " + (hearted ? "text-accent" : "hover:text-accent")}>{"♥"} {letter.hearts || 0}</button>
+            {" · "}
+            <button onClick={function() { copyLetterLink(letterId, function() { setCopied(true); setTimeout(function() { setCopied(false); }, 2000); }); }} className="hover:text-ink transition-colors">{copied ? "Link copied" : "Copy link"}</button>
           </p>
         </article>
 

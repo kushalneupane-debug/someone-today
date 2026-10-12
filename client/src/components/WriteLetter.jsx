@@ -2,6 +2,12 @@ import { useState } from "react";
 import { useSendRitual, pickAffirmation } from "../ritual";
 import { rememberLetter } from "../myLetters";
 
+function copyLetterLink(id, done) {
+  var url = location.origin + "/letter/" + id;
+  var p = navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject();
+  p.then(function() { done(true); }).catch(function() { window.prompt("Copy this link:", url); });
+}
+
 var MIN_CHARS = 10;
 var MAX_CHARS = 2000;
 
@@ -20,6 +26,8 @@ export default function WriteLetter({ type, onBack, onPosted }) {
   var [focused, setFocused] = useState(false);
   var [affirmation, setAffirmation] = useState("");
   var [care, setCare] = useState(false);
+  var [postedId, setPostedId] = useState(null);
+  var [copied, setCopied] = useState(false);
   var ritual = useSendRitual();
 
   var isLight = letterType === "light";
@@ -39,7 +47,7 @@ export default function WriteLetter({ type, onBack, onPosted }) {
         if (data.needsCare) { setCare(true); window.scrollTo(0, 0); return; }
         setCare(false);
         if (data.error) { setError(data.error); return; }
-        if (data.letter && data.letter.id) rememberLetter(data.letter.id);
+        if (data.letter && data.letter.id) { rememberLetter(data.letter.id); setPostedId(data.letter.id); setCopied(false); }
         setAffirmation(pickAffirmation(letterType, affirmation));
         ritual.fly();
       })
@@ -86,6 +94,12 @@ export default function WriteLetter({ type, onBack, onPosted }) {
         <div className="max-w-md text-center" aria-live="polite">
           <p className="ritual-appear font-display text-2xl sm:text-3xl text-ink leading-snug">{affirmation}</p>
           <p className="ritual-appear-late mt-4 text-sm text-ink-muted">If someone replies, you'll see it here.</p>
+          {postedId && (
+            <p className="ritual-appear-late mt-2 text-sm text-ink-faint">
+              On another device?{" "}
+              <button onClick={function() { copyLetterLink(postedId, function() { setCopied(true); }); }} className="text-ink-muted underline underline-offset-4 hover:text-ink">{copied ? "Link copied" : "Copy your letter's link"}</button>
+            </p>
+          )}
           <div className="ritual-appear-late mt-10 flex items-center justify-center gap-6 text-sm">
             <button onClick={onPosted} className="text-ink-muted hover:text-ink transition-colors">Read other letters</button>
             <span className="w-1 h-1 rounded-full bg-line" aria-hidden="true" />

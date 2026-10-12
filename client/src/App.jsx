@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import LetterWall from './components/LetterWall';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import { useTheme } from './theme';
 import { CONTACT_EMAIL } from './site';
+import { useRoute, navigate, goBack, link } from './router';
 
 var THEMES = [['light', 'Light'], ['dark', 'Dark'], ['auto', 'Auto']];
 
@@ -16,18 +17,18 @@ function CrisisBar() {
   );
 }
 
-function Footer({ go, theme, setTheme }) {
-  var link = 'text-ink-muted hover:text-ink transition-colors';
+function Footer({ theme, setTheme }) {
+  var linkClass = 'text-ink-muted hover:text-ink transition-colors';
   return (
     <footer className="border-t border-line mt-20 px-5 pt-12 pb-10">
       <div className="max-w-xl mx-auto">
         <p className="font-display text-xl text-ink">Someone Today</p>
         <p className="mt-1 text-sm text-ink-muted">Anonymous letters from strangers, for strangers.</p>
         <nav className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Footer">
-          <button onClick={function() { go('privacy'); }} className={link}>Privacy</button>
-          <button onClick={function() { go('terms'); }} className={link}>Terms</button>
-          <a href={'mailto:' + CONTACT_EMAIL} className={link}>Contact</a>
-          <a href="https://findahelpline.com" target="_blank" rel="noopener noreferrer" className={link}>Helplines worldwide</a>
+          <a {...link('/privacy')} className={linkClass}>Privacy</a>
+          <a {...link('/terms')} className={linkClass}>Terms</a>
+          <a href={'mailto:' + CONTACT_EMAIL} className={linkClass}>Contact</a>
+          <a href="https://findahelpline.com" target="_blank" rel="noopener noreferrer" className={linkClass}>Helplines worldwide</a>
         </nav>
 
         <div className="mt-10 pt-6 border-t border-line flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4 text-sm">
@@ -53,25 +54,35 @@ function Footer({ go, theme, setTheme }) {
 }
 
 function App() {
-  var [page, setPage] = useState('letters');
+  var route = useRoute();
   var [theme, setTheme] = useTheme();
 
-  // A single-page app keeps the scroll position when the content swaps,
-  // so every page change starts back at the top.
-  useEffect(function() { window.scrollTo(0, 0); }, [page]);
+  // Each page gets its own tab title. Letters stay generic on purpose:
+  // a tab or history entry shouldn't show someone's private words.
+  useEffect(function() {
+    var titles = { privacy: 'Privacy', terms: 'Terms', write: 'Write a letter', letter: 'A letter', notfound: 'Page not found' };
+    var t = route.name === 'wall' ? (route.kind === 'light' ? 'Good news' : null) : titles[route.name];
+    document.title = t ? t + ' · Someone Today' : 'Someone Today: anonymous letters';
+  }, [route.path]);
 
-  function go(next) { setPage(next); }
-  function goHome() { setPage('letters'); }
+  function home() { goBack('/'); }
 
   return (
     <div className="min-h-screen bg-bg text-ink flex flex-col">
       <CrisisBar />
       <main className="flex-1">
-        {page === 'privacy' ? <PrivacyPolicy onBack={goHome} />
-          : page === 'terms' ? <TermsOfService onBack={goHome} />
-          : <LetterWall />}
+        {route.name === 'privacy' ? <PrivacyPolicy onBack={home} />
+          : route.name === 'terms' ? <TermsOfService onBack={home} />
+          : route.name === 'notfound' ? (
+            <div className="px-5 py-24 max-w-xl mx-auto">
+              <h1 className="font-display text-3xl text-ink">This page doesn't exist.</h1>
+              <p className="mt-3 text-ink-muted">The link may be mistyped, or the page has moved.</p>
+              <button onClick={function() { navigate('/'); }} className="mt-6 text-accent hover:underline underline-offset-4">Go to the letters</button>
+            </div>
+          )
+          : <LetterWall route={route} />}
       </main>
-      <Footer go={go} theme={theme} setTheme={setTheme} />
+      <Footer theme={theme} setTheme={setTheme} />
     </div>
   );
 }

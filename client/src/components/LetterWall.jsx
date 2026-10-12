@@ -3,6 +3,7 @@ import WriteLetter from "./WriteLetter";
 import LetterDetail from "./LetterDetail";
 import { useMyLetters, isMine } from "../myLetters";
 import { usePresence } from "../presence";
+import { navigate, goBack, link } from "../router";
 
 function timeAgo(ts) {
   var mins = Math.floor((Date.now() - ts) / 60000);
@@ -19,17 +20,20 @@ var KINDS = {
   light: { tab: "Good news", about: "Wins, big and small. Celebrate them with someone.", empty: "No good news yet." },
 };
 
-export default function LetterWall() {
+// Which screen shows is decided by the URL (see router.js), not local state.
+export default function LetterWall({ route }) {
   var [letters, setLetters] = useState([]);
   var [status, setStatus] = useState("loading"); // loading | ready | error
-  var [view, setView] = useState("wall");
-  var [selectedLetter, setSelectedLetter] = useState(null);
+  var view = route.name; // "wall" | "write" | "letter"
+  var selectedLetter = route.name === "letter" ? route.id : null;
   var [page, setPage] = useState(0);
   var [hasMore, setHasMore] = useState(false);
   var [replyingNow, setReplyingNow] = useState(false);
-  var [kind, setKind] = useState("letter");
+  // The tab comes from the URL (/ or /good-news); remember it while reading a letter.
+  var [kind, setKind] = useState(route.kind || "letter");
+  useEffect(function() { if (route.name === "wall" && route.kind !== kind) setKind(route.kind); }, [route.path]);
   var mine = useMyLetters();
-  var viewingLetter = view === "detail" ? selectedLetter : null;
+  var viewingLetter = selectedLetter;
   var presence = usePresence({
     letterId: viewingLetter,
     writing: replyingNow,
@@ -59,12 +63,14 @@ export default function LetterWall() {
     if (view === "wall") { mine.refresh(); fetchLetters(0); }
   }, [view]);
 
-  function openLetter(id) { setSelectedLetter(id); setView("detail"); window.scrollTo(0, 0); }
-  function write() { setView("write"); window.scrollTo(0, 0); }
-  function backToWall() { setView("wall"); }
+  var wallPath = kind === "light" ? "/good-news" : "/";
+  function openLetter(id) { navigate("/letter/" + id); }
+  function write() { navigate("/write"); }
+  function backToWall() { goBack(wallPath); }
+  function showKind(k) { navigate(k === "light" ? "/good-news" : "/", { replace: true, keepScroll: true }); }
 
-  if (view === "write") return <WriteLetter onBack={backToWall} onPosted={backToWall} />;
-  if (view === "detail" && selectedLetter) return <LetterDetail letterId={selectedLetter} presence={presence.letter} onWritingChange={setReplyingNow} onBack={backToWall} onWrite={write} />;
+  if (view === "write") return <WriteLetter onBack={backToWall} onPosted={function() { navigate(wallPath, { replace: true }); }} />;
+  if (view === "letter" && selectedLetter) return <LetterDetail letterId={selectedLetter} presence={presence.letter} onWritingChange={setReplyingNow} onBack={backToWall} onWrite={write} />;
 
   return (
     <div className="px-5">
@@ -104,10 +110,10 @@ export default function LetterWall() {
                 var lively = Boolean(p) || l.newReplies > 0;
                 return (
                   <li key={l.id}>
-                    <button onClick={function() { openLetter(l.id); }} className="w-full flex items-baseline gap-4 py-2 text-left group">
+                    <a {...link("/letter/" + l.id)} className="flex items-baseline gap-4 py-2 text-left group">
                       <span className="flex-1 min-w-0 truncate text-ink-muted group-hover:text-ink transition-colors">{l.text}</span>
                       <span className={"flex-shrink-0 text-sm " + (lively ? "text-accent" : "text-ink-faint")}>{note}</span>
-                    </button>
+                    </a>
                   </li>
                 );
               })}
@@ -119,7 +125,7 @@ export default function LetterWall() {
           {Object.keys(KINDS).map(function(k) {
             var on = kind === k;
             return (
-              <button key={k} role="tab" aria-selected={on} onClick={function() { setKind(k); }}
+              <button key={k} role="tab" aria-selected={on} onClick={function() { showKind(k); }}
                 className={"-mb-px pb-3 border-b-2 transition-colors " + (on ? "border-accent text-ink font-medium" : "border-transparent text-ink-muted hover:text-ink")}>
                 {KINDS[k].tab}
               </button>
@@ -139,7 +145,7 @@ export default function LetterWall() {
               var unanswered = !letter.replyCount && letter.type !== "light" && !isMine(letter.id);
               return (
                 <li key={letter.id} className="border-b border-line">
-                  <button onClick={function() { openLetter(letter.id); }} className="w-full text-left py-7 group">
+                  <a {...link("/letter/" + letter.id)} className="block text-left py-7 group">
                     <p className="letter-text text-ink">{letter.text}</p>
                     <p className="mt-3 text-sm text-ink-faint">
                       {timeAgo(letter.createdAt)}
@@ -149,7 +155,7 @@ export default function LetterWall() {
                         ? <span className="text-accent"> · No replies yet · <span className="group-hover:underline underline-offset-4">Write back</span></span>
                         : letter.replyCount > 0 && <span> · {replies(letter.replyCount)}</span>}
                     </p>
-                  </button>
+                  </a>
                 </li>
               );
             })}
