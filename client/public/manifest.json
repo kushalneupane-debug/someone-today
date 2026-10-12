@@ -1,7 +1,7 @@
 {
   "name": "Someone Today",
-  "short_name": "Someone",
-  "description": "A quiet place to meet someone.",
+  "short_name": "Someone Today",
+  "description": "Anonymous letters from strangers, for strangers.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf8f5",

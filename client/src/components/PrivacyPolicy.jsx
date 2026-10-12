@@ -29,6 +29,11 @@ export default function PrivacyPolicy({ onBack }) {
       </section>
 
       <section>
+        <h2>Notifications</h2>
+        <p>Only if you ask for them. When you tap "Notify me when someone replies", your browser gives us a push address, a link at Google, Apple, or Mozilla's notification service that reaches only that browser. We store it next to that one letter and use it only to say "Someone replied to your letter." The notification never includes the reply's words. Push addresses delete themselves after 30 days, and you can turn them off at any time from your letter.</p>
+      </section>
+
+      <section>
         <h2>Kept on your device, not ours</h2>
         <p>Your browser remembers a few things so the site works for you: which letters you wrote (so it can tell you when someone replies), whether you've replied before, and your theme. To check for replies, it sends us only the letter codes. We don't store or log those checks. Clearing your browser's site data erases all of it.</p>
       </section>

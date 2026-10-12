@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSendRitual, pickAffirmation } from "../ritual";
 import { isMine, markSeen, seenCount, saidMeToo, setSaidMeToo } from "../myLetters";
+import NotifyReplies from "./NotifyReplies";
 
 var WARMTH = {
   letter: ["You're not alone", "Sending strength", "I've been there too", "This will pass"],
@@ -191,6 +192,8 @@ export default function LetterDetail({ letterId, onBack, onWrite, presence, onWr
             {letter.meToo > 0 && <span className="text-sm text-ink-muted">{letter.meToo === 1 ? "1 person feels this too" : letter.meToo + " people feel this too"}</span>}
           </div>
         ))}
+
+        {mine && <NotifyReplies letterId={letterId} className="mb-6" />}
 
         {/* Live presence — only ever real numbers, never shown when zero. */}
         <div className="min-h-[1.5rem] mb-10 px-1 text-sm" aria-live="polite">

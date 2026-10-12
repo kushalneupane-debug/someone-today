@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSendRitual, pickAffirmation } from "../ritual";
 import { rememberLetter } from "../myLetters";
+import NotifyReplies from "./NotifyReplies";
 
 function copyLetterLink(id, done) {
   var url = location.origin + "/letter/" + id;
@@ -94,6 +95,7 @@ export default function WriteLetter({ type, onBack, onPosted }) {
         <div className="max-w-md text-center" aria-live="polite">
           <p className="ritual-appear font-display text-2xl sm:text-3xl text-ink leading-snug">{affirmation}</p>
           <p className="ritual-appear-late mt-4 text-sm text-ink-muted">If someone replies, you'll see it here.</p>
+          {postedId && <div className="ritual-appear-late mt-5"><NotifyReplies letterId={postedId} /></div>}
           {postedId && (
             <p className="ritual-appear-late mt-2 text-sm text-ink-faint">
               On another device?{" "}

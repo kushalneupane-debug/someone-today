@@ -2,6 +2,7 @@ var express = require("express");
 var crypto = require("crypto");
 var mongoose = require("mongoose");
 var moderation = require("./moderation");
+var push = require("./push");
 var router = express.Router();
 
 var MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/someonetoday";
@@ -143,6 +144,7 @@ router.post("/:id/reply", function(req, res) {
     if (!letter) return res.status(404).json({ error: "Letter not found" });
     var r = letter.replies[0];
     res.json({ success: true, reply: { id: r._id, warmth: r.warmth, text: r.text, createdAt: r.createdAt } });
+    push.notifyReply(letter._id);
   }).catch(function() { res.status(500).json({ error: "Failed to send reply" }); });
 });
 
