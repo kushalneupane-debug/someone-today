@@ -1,106 +1,244 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { useSendRitual, pickAffirmation } from "../ritual";
+import { isMine, markSeen, seenCount } from "../myLetters";
 
-var tagEmojis = { lonely: "\uD83C\uDF19", anxious: "\u26A1", sad: "\uD83C\uDF27\uFE0F", lost: "\uD83C\uDF0D", overwhelmed: "\uD83C\uDF0A", angry: "\uD83D\uDD25", numb: "\uD83E\uDDCA", grateful: "\uD83D\uDE4F", hopeful: "\uD83C\uDF31", healing: "\uD83E\uDE77" };
+var WARMTH = {
+  letter: ["You're not alone", "Sending strength", "I've been there too", "This will pass"],
+  light: ["So proud of you", "This made my day", "You deserve this"],
+};
+var REPLIED_KEY = "someone-today:has-replied";
 
-export default function LetterDetail({ letterId, onBack }) {
+function hasRepliedBefore() { try { return localStorage.getItem(REPLIED_KEY) === "1"; } catch (e) { return false; } }
+function rememberReplied() { try { localStorage.setItem(REPLIED_KEY, "1"); } catch (e) {} }
+
+function timeAgo(ts) {
+  var mins = Math.floor((Date.now() - ts) / 60000);
+  if (mins < 1) return "just now"; if (mins < 60) return mins + "m ago";
+  var hrs = Math.floor(mins / 60); if (hrs < 24) return hrs + "h ago";
+  return Math.floor(hrs / 24) + "d ago";
+}
+
+function TypingDots() {
+  return <span className="inline-flex items-center gap-1 ml-1" aria-hidden="true"><span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" /></span>;
+}
+
+export default function LetterDetail({ letterId, onBack, onWrite, presence, onWritingChange }) {
+  var mine = isMine(letterId);
   var [letter, setLetter] = useState(null);
-  var [loading, setLoading] = useState(true);
-  var [replyText, setReplyText] = useState("");
-  var [replying, setReplying] = useState(false);
+  var [status, setStatus] = useState("loading"); // loading | ready | missing | error
+  // Replies past this index arrived since the writer last looked.
+  var [seenBefore] = useState(function() { return mine ? seenCount(letterId) : Infinity; });
+  var [warmth, setWarmth] = useState("");
+  var [note, setNote] = useState("");
+  var [sending, setSending] = useState(false);
   var [error, setError] = useState("");
+  var [pendingReply, setPendingReply] = useState(null);
+  var [affirmation, setAffirmation] = useState("");
   var [hearted, setHearted] = useState(false);
-  var bottomRef = useRef(null);
+  var [report, setReport] = useState("idle"); // idle | confirm | done
+  var [firstReply] = useState(function() { return !hasRepliedBefore(); });
+  var ritual = useSendRitual();
 
+  function load() {
+    return fetch("/api/letters/" + letterId)
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+      .then(function(res) {
+        if (!res.ok) { setStatus(res.data && res.data.error === "Letter not found" ? "missing" : "error"); return; }
+        setLetter(function(prev) {
+          // Don't let a background refresh overwrite a reply that's mid-flight.
+          if (prev && res.data.replies.length < prev.replies.length) return prev;
+          return res.data;
+        });
+        setStatus("ready");
+      })
+      .catch(function() { setStatus(function(s) { return s === "ready" ? s : "error"; }); });
+  }
+
+  useEffect(function() { load(); }, [letterId]);
+
+  // Writers watching their own letter see new replies arrive without reloading.
   useEffect(function() {
-    fetch("/api/letters/" + letterId).then(function(r) { return r.json(); }).then(function(data) { setLetter(data); setLoading(false); }).catch(function() { setLoading(false); });
-  }, [letterId]);
+    if (!mine) return;
+    var t = setInterval(function() { if (document.visibilityState === "visible") load(); }, 10000);
+    return function() { clearInterval(t); };
+  }, [mine, letterId]);
+
+  // Opening your own letter means you've now seen every reply on it.
+  useEffect(function() {
+    if (mine && letter) markSeen(letterId, letter.replies.length);
+  }, [mine, letter, letterId]);
+
+  // Tell presence when we're composing, so the writer feels someone writing back.
+  var composing = !mine && ritual.phase === "compose" && (warmth !== "" || note.trim().length > 0);
+  useEffect(function() {
+    if (onWritingChange) onWritingChange(composing);
+  }, [composing]);
+  useEffect(function() { return function() { if (onWritingChange) onWritingChange(false); }; }, []);
+
+  // The reply joins the list only once it has "landed" — after the flight.
+  useEffect(function() {
+    if (ritual.phase !== "sent" || !pendingReply) return;
+    setLetter(function(prev) { return Object.assign({}, prev, { replies: prev.replies.concat([pendingReply]) }); });
+    setPendingReply(null); setWarmth(""); setNote("");
+  }, [ritual.phase, pendingReply]);
 
   function handleHeart() {
     setHearted(true);
-    setTimeout(function() { setHearted(false); }, 600);
-    fetch("/api/letters/" + letterId + "/heart", { method: "POST" }).then(function(r) { return r.json(); }).then(function(data) { setLetter(function(prev) { return Object.assign({}, prev, { hearts: data.hearts }); }); });
+    setTimeout(function() { setHearted(false); }, 700);
+    fetch("/api/letters/" + letterId + "/heart", { method: "POST" }).then(function(r) { return r.json(); }).then(function(data) {
+      if (typeof data.hearts === "number") setLetter(function(prev) { return Object.assign({}, prev, { hearts: data.hearts }); });
+    }).catch(function() {});
   }
 
   function handleReply(e) {
     e.preventDefault();
-    if (!replyText.trim() || replyText.trim().length < 2) { setError("Write at least a couple words."); return; }
-    setReplying(true); setError("");
-    fetch("/api/letters/" + letterId + "/reply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: replyText.trim() }) })
+    if (sending || (!warmth && note.trim().length < 2)) return;
+    setSending(true); setError("");
+    fetch("/api/letters/" + letterId + "/reply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ warmth: warmth, text: note.trim() }) })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.error) { setError(data.error); } else {
-          setLetter(function(prev) { return Object.assign({}, prev, { replies: (prev.replies || []).concat([data.reply]) }); });
-          setReplyText("");
-          setTimeout(function() { if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: "smooth" }); }, 100);
-        }
-        setReplying(false);
-      }).catch(function() { setError("Something went wrong."); setReplying(false); });
+        setSending(false);
+        if (data.error) { setError(data.error); return; }
+        rememberReplied();
+        setPendingReply(data.reply);
+        setAffirmation(pickAffirmation("reply", affirmation));
+        ritual.fly();
+      })
+      .catch(function() { setSending(false); setError("Couldn't send just now. Your words are still here. Try again in a moment."); });
   }
 
-  function timeAgo(ts) {
-    var diff = Date.now() - ts; var mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now"; if (mins < 60) return mins + "m ago";
-    var hrs = Math.floor(mins / 60); if (hrs < 24) return hrs + "h ago";
-    return Math.floor(hrs / 24) + "d ago";
+  function sendReport() {
+    fetch("/api/letters/" + letterId + "/report", { method: "POST" }).catch(function() {});
+    setReport("done");
   }
 
-  if (loading) return <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center"><p className="text-gray-500 text-sm">Opening letter...</p></div>;
-  if (!letter) return <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center px-5"><p className="text-gray-400 mb-4">Letter not found.</p><button onClick={onBack} className="text-emerald-400 text-sm">{"\u2190 Go back"}</button></div>;
+  var back = (
+    <button onClick={onBack} className="text-ink-muted hover:text-ink transition-colors text-sm mb-8 flex items-center gap-1">
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+      Back to letters
+    </button>
+  );
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-bg px-5 py-8"><div className="max-w-xl mx-auto">{back}
+        <div className="space-y-3 animate-pulse" aria-label="Opening letter">
+          <div className="h-4 bg-line rounded w-11/12" /><div className="h-4 bg-line rounded w-10/12" /><div className="h-4 bg-line rounded w-7/12" />
+        </div>
+      </div></div>
+    );
+  }
+  if (status !== "ready") {
+    return (
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-5 text-center">
+        <p className="font-display text-2xl text-ink mb-2">{status === "missing" ? "This letter isn't here anymore." : "We couldn't open this letter."}</p>
+        <p className="text-ink-muted text-sm mb-6">{status === "missing" ? "It may have been taken down." : "Check your connection and try again."}</p>
+        <button onClick={onBack} className="text-accent text-sm">Back to letters</button>
+      </div>
+    );
+  }
 
   var isLight = letter.type === "light";
+  var options = WARMTH[isLight ? "light" : "letter"];
+  var others = presence ? presence.reading + presence.writing : 0;
+  var newCount = mine ? Math.max(0, letter.replies.length - seenBefore) : 0;
+  var flying = ritual.phase === "flying";
+
   return (
-    <div className="min-h-screen bg-[#0a0a0f] px-5 py-8">
-      <style>{`
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes heartBeat { 0% { transform: scale(1); } 25% { transform: scale(1.3); } 50% { transform: scale(0.95); } 100% { transform: scale(1); } }
-        @keyframes replySlide { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
-        .fade-in { animation: fadeInUp 0.5s ease-out both; }
-        .heart-beat { animation: heartBeat 0.5s ease-out; }
-        .reply-card { animation: replySlide 0.4s ease-out both; }
-      `}</style>
-      <div className="max-w-xl mx-auto">
-        <button onClick={onBack} className="fade-in text-gray-500 hover:text-white transition-colors text-sm mb-8 flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-          Back to letters
-        </button>
+    <div className="min-h-screen bg-bg px-5 py-8">
+      <div className="max-w-xl mx-auto animate-fade-in">
+        {back}
 
-        <div className={"fade-in rounded-3xl p-7 sm:p-10 mb-8 relative overflow-hidden " + (isLight ? "bg-gradient-to-br from-amber-500/[0.05] to-amber-600/[0.02] border border-amber-500/[0.12]" : "bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/[0.06]")} style={{animationDelay:"0.1s"}}>
-          <div className={"absolute top-4 right-6 text-6xl font-serif opacity-[0.04] select-none " + (isLight ? "text-amber-300" : "text-white")}>{"\u201C"}</div>
-          {isLight && <div className="flex items-center gap-2 mb-5"><span className="text-amber-400 text-sm">{"\u2728"}</span><span className="text-amber-400/50 text-xs font-light tracking-widest uppercase">Wall of Light</span></div>}
-          <p className={"text-lg sm:text-xl leading-relaxed mb-6 font-serif font-light relative z-10 " + (isLight ? "text-amber-100/90" : "text-gray-200")}>{letter.text}</p>
-          {letter.tags && letter.tags.length > 0 && <div className="flex flex-wrap gap-1.5 mb-5">{letter.tags.map(function(tag) { return <span key={tag} className="text-[10px] text-emerald-400/50 bg-emerald-500/[0.06] px-2.5 py-1 rounded-full flex items-center gap-1"><span>{tagEmojis[tag] || ""}</span> {tag}</span>; })}</div>}
-          <div className="flex items-center justify-between pt-4 border-t border-white/[0.04]">
-            <span className="text-gray-600 text-xs">{timeAgo(letter.createdAt)}</span>
-            <button onClick={handleHeart} className={"flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 " + (hearted ? "bg-rose-500/20 text-rose-400" : "bg-white/[0.03] text-gray-500 hover:text-rose-400 hover:bg-rose-500/10")}>
-              <span className={"text-base " + (hearted ? "heart-beat" : "")}>{"\u2665"}</span>
-              <span className="text-xs font-medium">{letter.hearts || 0}</span>
-            </button>
-          </div>
+        <article className="mb-4">
+          <p className="letter-text text-[1.375rem] text-ink whitespace-pre-line">{letter.text}</p>
+          <p className="mt-4 text-sm text-ink-faint">
+            {mine ? "You wrote this · " : ""}{timeAgo(letter.createdAt)}{isLight ? " · good news" : ""} ·{" "}
+            <button onClick={handleHeart} aria-label="Send love" className={"transition-colors " + (hearted ? "text-accent" : "hover:text-accent")}>{"♥"} {letter.hearts || 0}</button>
+          </p>
+        </article>
+
+        {/* Live presence — only ever real numbers, never shown when zero. */}
+        <div className="min-h-[1.5rem] mb-10 px-1 text-sm" aria-live="polite">
+          {mine && presence && presence.writing > 0 && <p className="animate-fade-in text-accent flex items-center">Someone is writing back to you<TypingDots /></p>}
+          {mine && presence && presence.writing === 0 && presence.reading > 0 && <p className="animate-fade-in text-ink-muted flex items-center gap-2"><span className="presence-dot" />Someone is reading your letter right now.</p>}
+          {!mine && others > 0 && <p className="animate-fade-in text-ink-muted flex items-center gap-2"><span className="presence-dot" />{others === 1 ? "Someone else is here with this letter too." : others + " others are here with this letter too."}</p>}
         </div>
 
-        <div className="fade-in mb-6" style={{animationDelay:"0.2s"}}>
-          <h3 className="text-white text-sm font-medium mb-4">{(letter.replies || []).length > 0 ? "Replies (" + letter.replies.length + ")" : "No replies yet \u2014 be the first"}</h3>
-          <div className="space-y-3">
-            {(letter.replies || []).map(function(reply, i) {
-              return (
-                <div key={reply.id} className="reply-card bg-emerald-500/[0.03] border border-emerald-500/[0.08] rounded-2xl px-5 py-4 hover:bg-emerald-500/[0.06] transition-colors" style={{animationDelay: (i * 0.1) + "s"}}>
-                  <p className="text-gray-300 text-sm leading-relaxed">{reply.text}</p>
-                  <span className="text-gray-600 text-xs mt-2 block">{timeAgo(reply.createdAt)}</span>
-                </div>
-              );
-            })}
-          </div>
-          <div ref={bottomRef}></div>
-        </div>
+        <section className="mb-10" aria-label="Replies">
+          {letter.replies.length === 0 ? (
+            <p className="text-ink-muted text-sm">{mine ? "No replies yet. Someone will find it." : "No one has written back yet. Yours could be the first."}</p>
+          ) : (
+            <>
+              <h2 className="text-sm font-medium text-ink border-b border-line pb-3">{letter.replies.length === 1 ? "1 reply" : letter.replies.length + " replies"}</h2>
+              {newCount > 0 && <p className="ritual-appear text-accent mt-4">Someone read your letter and wrote back.</p>}
+              <ul>
+                {letter.replies.map(function(reply, i) {
+                  var isNew = i >= seenBefore;
+                  return (
+                    <li key={reply.id} className={"py-5 border-b border-line " + (isNew ? "ritual-appear" : "")}
+                      style={isNew ? { animationDelay: (0.4 + (i - seenBefore) * 0.35) + "s" } : undefined}>
+                      {reply.warmth && <p className={"letter-text " + (isNew ? "text-accent" : "text-ink")}>{reply.warmth}</p>}
+                      {reply.text && <p className={"leading-relaxed " + (reply.warmth ? "text-ink-muted mt-1" : "letter-text text-ink")}>{reply.text}</p>}
+                      <span className="text-ink-faint text-sm mt-2 block">{timeAgo(reply.createdAt)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </section>
 
-        <form onSubmit={handleReply} className="fade-in border-t border-white/[0.06] pt-5" style={{animationDelay:"0.3s"}}>
-          <p className="text-gray-500 text-xs mb-3 font-light">Reply with kindness</p>
-          <div className="flex gap-3">
-            <input type="text" value={replyText} onChange={function(e) { setReplyText(e.target.value); }} placeholder="You\'re not alone in this..." maxLength={500} className="flex-1 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600/50 focus:outline-none focus:border-emerald-500/20 transition-all" />
-            <button type="submit" disabled={replying || !replyText.trim()} className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-xl px-5 py-3 text-sm font-medium transition-all disabled:opacity-30 hover:-translate-y-0.5">{replying ? "..." : "Send"}</button>
+        {mine ? null : ritual.phase === "sent" ? (
+          <div className="border-t border-line pt-10 pb-4 text-center" aria-live="polite">
+            <p className="ritual-appear font-display text-2xl text-ink leading-snug">{affirmation}</p>
+            <div className="ritual-appear-late mt-8 flex items-center justify-center gap-6 text-sm">
+              <button onClick={onBack} className="text-ink-muted hover:text-ink transition-colors">Read other letters</button>
+              <span className="w-1 h-1 rounded-full bg-line" aria-hidden="true" />
+              <button onClick={onWrite} className="text-accent hover:text-ink transition-colors">Write your own</button>
+            </div>
           </div>
-          {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
-        </form>
+        ) : (
+          <form onSubmit={handleReply} className="pt-2">
+            <div className={flying ? "ritual-recede" : ""}>
+              <p className="text-sm font-medium text-ink mb-1">Write back</p>
+              {firstReply && <p className="text-ink-muted text-sm mb-4">Reply the way you'd want someone to reply to you.</p>}
+              <div className="flex flex-wrap gap-2 mb-4 mt-3" role="group" aria-label="Choose a reply">
+                {options.map(function(opt) {
+                  var on = warmth === opt;
+                  return (
+                    <button type="button" key={opt} aria-pressed={on} onClick={function() { setWarmth(on ? "" : opt); }}
+                      className={"px-4 py-2 rounded-full text-sm border transition-colors " + (on ? "bg-accent text-surface border-accent" : "bg-surface text-ink border-line hover:border-accent/40")}>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className={"paper " + (flying ? "ritual-fly" : "")} onAnimationEnd={flying ? ritual.onFlyEnd : undefined}>
+              {warmth && <p className="letter-text text-ink px-5 pt-4">{warmth}</p>}
+              <textarea value={note} onChange={function(e) { setNote(e.target.value); }} readOnly={flying}
+                aria-label="Add a few words" placeholder={warmth ? "Add a few words, if you want" : "Or write a few words of your own"} maxLength={280} rows={2}
+                className={"paper-text block w-full bg-transparent px-5 pb-4 text-ink placeholder-ink-faint focus:outline-none resize-none " + (warmth ? "pt-1" : "pt-4")} />
+            </div>
+            <div className={"mt-3 flex items-center justify-between gap-3 " + (flying ? "ritual-recede" : "")}>
+              {error ? <p role="alert" className="text-red-700 text-sm">{error}</p> : <span className="text-ink-faint text-xs">{note.length > 200 ? 280 - note.length + " left" : ""}</span>}
+              <button type="submit" disabled={sending || (!warmth && note.trim().length < 2)} className="btn-primary py-2.5 px-6 text-sm">{sending ? "Sending..." : "Send"}</button>
+            </div>
+          </form>
+        )}
+
+        {!mine && (
+          <div className="mt-16 text-sm text-ink-faint">
+            {report === "idle" && <button onClick={function() { setReport("confirm"); }} className="hover:text-ink transition-colors">Report this letter</button>}
+            {report === "confirm" && (
+              <p>Report this letter? It's hidden once a few people report it.{" "}
+                <button onClick={sendReport} className="text-red-700 underline underline-offset-2 ml-1">Report</button>
+                <button onClick={function() { setReport("idle"); }} className="underline underline-offset-2 ml-3">Cancel</button>
+              </p>
+            )}
+            {report === "done" && <p>Thanks for looking out for this place.</p>}
+          </div>
+        )}
       </div>
     </div>
   );

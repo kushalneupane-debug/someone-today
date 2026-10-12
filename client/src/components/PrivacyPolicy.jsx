@@ -1,49 +1,57 @@
 export default function PrivacyPolicy({ onBack }) {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-start px-5 py-12 animate-fade-in">
+    <div className="min-h-screen bg-bg flex flex-col items-center justify-start px-5 py-12 animate-fade-in">
       <div className="max-w-2xl w-full space-y-8">
-        <button onClick={onBack} className="text-gray-500 hover:text-gray-300 text-sm transition-colors">← Back to home</button>
+        <button onClick={onBack} className="text-ink-muted hover:text-ink text-sm transition-colors">← Back to letters</button>
         <div className="space-y-2">
-          <h1 className="text-3xl font-serif text-white">Privacy Policy</h1>
-          <p className="text-gray-600 text-sm font-light">Last updated: April 16, 2026</p>
+          <h1 className="text-3xl font-serif text-ink">Privacy</h1>
+          <p className="text-ink-faint text-sm">Last updated: October 11, 2026</p>
         </div>
-        <div className="space-y-8 text-gray-400 font-light leading-relaxed">
+        <div className="space-y-8 text-ink-muted leading-relaxed">
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Our Promise</h2>
-            <p>Someone Today is built on one principle: <span className="text-white font-medium">your privacy is absolute</span>. We don't collect personal information, we don't create accounts, and we don't track you. When your session ends, it's gone — like it never happened.</p>
+            <h2 className="text-lg font-medium text-ink">The short version</h2>
+            <p>No accounts. No names. No emails. We keep the words you post and the bare minimum needed to stop abuse.</p>
           </section>
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">What We Don't Collect</h2>
-            <ul className="space-y-2 list-none">
-              <li className="flex items-start gap-2"><span className="text-emerald-500 mt-1">✕</span><span>No names, emails, or personal information</span></li>
-              <li className="flex items-start gap-2"><span className="text-emerald-500 mt-1">✕</span><span>No user accounts or profiles</span></li>
-              <li className="flex items-start gap-2"><span className="text-emerald-500 mt-1">✕</span><span>No chat logs or conversation history</span></li>
-              <li className="flex items-start gap-2"><span className="text-emerald-500 mt-1">✕</span><span>No IP address logging</span></li>
-              <li className="flex items-start gap-2"><span className="text-emerald-500 mt-1">✕</span><span>No cookies for tracking</span></li>
-              <li className="flex items-start gap-2"><span className="text-emerald-500 mt-1">✕</span><span>No third-party analytics that identify you</span></li>
+            <h2 className="text-lg font-medium text-ink">What we keep</h2>
+            <ul className="space-y-2 list-disc pl-5">
+              <li>The letters and replies you post, with the moods you pick and the time you posted.</li>
+              <li>To count love and reports once per person, we keep a scrambled code made from your network address (a salted one-way hash), not the address itself. It can't be turned back into your address.</li>
+              <li>To stop flooding, the server briefly remembers that same scrambled code after you post. That's held in memory only, never written to disk.</li>
+            </ul>
+            <p>Letters stay up unless a few people report them. Then they're hidden automatically.</p>
+          </section>
+          <section className="space-y-3">
+            <h2 className="text-lg font-medium text-ink">What we don't keep</h2>
+            <ul className="space-y-2 list-disc pl-5">
+              <li>Your name, email, phone number, or any account.</li>
+              <li>Anything that ties a letter to the person who wrote it.</li>
             </ul>
           </section>
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">How Sessions Work</h2>
-            <p>When you join Someone Today, you're connected through a temporary, encrypted WebSocket connection. Messages exist only in real-time — they are never written to a database. When the session ends, all data is permanently erased from memory.</p>
+            <h2 className="text-lg font-medium text-ink">"Someone is here"</h2>
+            <p>While the site is open, your browser quietly tells our server every 20 seconds which letter you're on and whether you're writing a reply. That's how we can say "someone is reading your letter right now." It uses a random code that changes every visit, lives only in memory, and is forgotten 60 seconds after you leave.</p>
           </section>
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Notifications</h2>
-            <p>If you enable push notifications, your browser's push subscription token is stored temporarily. This token cannot identify you personally. You can unsubscribe at any time.</p>
+            <h2 className="text-lg font-medium text-ink">Letters you write</h2>
+            <p>Your browser remembers which letters you wrote, so it can tell you when someone replies. That list stays on your device. To check for replies, it sends us only the letter codes, and we don't store or log those checks.</p>
           </section>
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Abuse Reports</h2>
-            <p>If you report someone, we receive a minimal, anonymous report. Reports do not contain chat transcripts or personally identifiable information.</p>
+            <h2 className="text-lg font-medium text-ink">Analytics</h2>
+            <p>We use Google Analytics to count visits and see which pages are used. Google may set cookies to do this. We don't send it the contents of any letter.</p>
           </section>
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Age Requirement</h2>
-            <p>Someone Today is intended for users aged 13 and older. If you are under 18, we encourage you to speak with a trusted adult about any issues you may be facing.</p>
+            <h2 className="text-lg font-medium text-ink">Before you post</h2>
+            <p>Letters are public. Anyone who visits can read them. Please don't include your name, where you live, or anything that could identify you or someone else.</p>
           </section>
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Contact</h2>
-            <p>Questions? Reach out at <a href="mailto:hello@getsomeonetoday.com" className="text-emerald-400 hover:text-emerald-300 transition-colors">hello@getsomeonetoday.com</a></p>
+            <h2 className="text-lg font-medium text-ink">Age</h2>
+            <p>Someone Today is for people 13 and older.</p>
           </section>
-          <div className="border-t border-white/10 pt-6 text-gray-600 text-sm">Someone Today — A quiet place to talk to a real person.</div>
+          <section className="space-y-3">
+            <h2 className="text-lg font-medium text-ink">Contact</h2>
+            <p>Questions? <a href="mailto:hello@getsomeonetoday.com" className="text-accent underline underline-offset-2">hello@getsomeonetoday.com</a></p>
+          </section>
         </div>
       </div>
     </div>

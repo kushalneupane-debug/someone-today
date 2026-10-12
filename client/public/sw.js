@@ -1,26 +1,4 @@
-self.addEventListener('push', function(event) {
-  var data = { title: 'Someone Today', body: 'Someone needs you.' };
-  try { data = event.data.json(); } catch(e) {}
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png'
-    })
-  );
-});
-
-self.addEventListener('notificationclick', function(event) {
-  event.notification.close();
-  var url = '/';
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(list) {
-      for (var i = 0; i < list.length; i++) {
-        if (list[i].url.indexOf(self.location.origin) !== -1) {
-          return list[i].focus();
-        }
-      }
-      return clients.openWindow(url);
-    })
-  );
-});
+// Push notifications were removed. This replaces the old worker on returning
+// visitors' browsers and then unregisters itself.
+self.addEventListener('install', function() { self.skipWaiting(); });
+self.addEventListener('activate', function() { self.registration.unregister(); });

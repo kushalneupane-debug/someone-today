@@ -1,263 +1,33 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
-import LandingPage from './components/LandingPage';
-import WaitingScreen from './components/WaitingScreen';
-import ChatInterface from './components/ChatInterface';
-import SessionEnded from './components/SessionEnded';
-import CommunityPromise from './components/CommunityPromise';
-import CrisisRedirection from './components/CrisisRedirection';
+import { useState } from 'react';
+import LetterWall from './components/LetterWall';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
-import LetterWall from './components/LetterWall';
-import AboutPage from './components/AboutPage';
-import BreathePage from './components/BreathePage';
-
-const SOCKET_URL = import.meta.env.VITE_API_URL || '';
 
 function App() {
-  const [screen, setScreen] = useState('landing');
-  const [role, setRole] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [endsAt, setEndsAt] = useState(null);
-  const [roomId, setRoomId] = useState(null);
-  const [partnerTyping, setPartnerTyping] = useState(false);
-  const [showPromise, setShowPromise] = useState(false);
-  const [showCrisis, setShowCrisis] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
-  const [showTerms, setShowTerms] = useState(false);
-  const [mood, setMood] = useState([]);
-  const [noListeners, setNoListeners] = useState(false);
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [extensionRequested, setExtensionRequested] = useState(false);
-  const [extensionIncoming, setExtensionIncoming] = useState(false);
-  const [extensionUsed, setExtensionUsed] = useState(false);
-  const [extensionConfirmed, setExtensionConfirmed] = useState(false);
-  const [showLetters, setShowLetters] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
-  const [showBreathe, setShowBreathe] = useState(false);
-  const [sessionStartTime, setSessionStartTime] = useState(null);
-  const socketRef = useRef(null);
-  const roleRef = useRef(null);
+  var [page, setPage] = useState('letters');
 
-  useEffect(function() {
-    roleRef.current = role;
-  }, [role]);
+  function goHome() { setPage('letters'); window.scrollTo(0, 0); }
 
-  useEffect(function() {
-    var socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
-    socketRef.current = socket;
-
-    socket.on('waiting', function() { setScreen('waiting'); });
-
-    socket.on('matched', function(data) {
-      setRoomId(data.roomId);
-      setEndsAt(data.endsAt);
-      setMessages([]);
-      setNoListeners(false);
-      setExtensionRequested(false);
-      setExtensionIncoming(false);
-      setExtensionUsed(false);
-      setExtensionConfirmed(false);
-      setSessionStartTime(Date.now());
-      setScreen('chat');
-    });
-
-    socket.on('new-message', function(msg) {
-      var currentRole = roleRef.current;
-      var sender = msg.from === currentRole ? 'me' : 'them';
-      setMessages(function(prev) {
-        return prev.concat([{ sender: sender, text: msg.text, time: msg.time }]);
-      });
-      setPartnerTyping(false);
-    });
-
-    socket.on('user-typing', function() { setPartnerTyping(true); });
-    socket.on('user-stopped-typing', function() { setPartnerTyping(false); });
-    socket.on('session-ended', function() { setScreen('ended'); });
-    socket.on('no-listeners', function() { setNoListeners(true); });
-    socket.on('extension-requested', function() { setExtensionIncoming(true); });
-
-    socket.on('extension-accepted', function(data) {
-      setEndsAt(data.newEndsAt);
-      setExtensionRequested(false);
-      setExtensionIncoming(false);
-      setExtensionUsed(true);
-      setExtensionConfirmed(true);
-      setTimeout(function() { setExtensionConfirmed(false); }, 3000);
-    });
-
-    socket.on('extension-declined', function() { setExtensionRequested(false); });
-
-    return function() { socket.disconnect(); };
-  }, []);
-
-  var subscribeToPush = useCallback(async function() {
-    try {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-      var reg = await navigator.serviceWorker.register('/sw.js');
-      await navigator.serviceWorker.ready;
-      var resp = await fetch('/api/push/vapid-public-key');
-      var json = await resp.json();
-      if (!json.key) return;
-      var sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: json.key
-      });
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscription: sub })
-      });
-      setPushEnabled(true);
-    } catch (err) {
-      console.error('Push subscription failed:', err);
-    }
-  }, []);
-
-  var joinQueue = function(selectedRole, duration, selectedMood) {
-    setRole(selectedRole);
-    setMood(selectedMood || []);
-    setNoListeners(false);
-    if (socketRef.current) {
-      socketRef.current.emit('join-queue', { role: selectedRole, duration: duration, mood: selectedMood || [] });
-    }
-  };
-
-  var sendMessage = function(text) {
-    if (socketRef.current) socketRef.current.emit('send-message', { text: text });
-  };
-
-  var emitTyping = function() {
-    if (socketRef.current) socketRef.current.emit('typing');
-  };
-
-  var emitStopTyping = function() {
-    if (socketRef.current) socketRef.current.emit('stop-typing');
-  };
-
-  var handleStepAway = function() {
-    if (socketRef.current) socketRef.current.emit('step-away');
-  };
-
-  var handleRequestExtend = function() {
-    if (socketRef.current) {
-      socketRef.current.emit('request-extend');
-      setExtensionRequested(true);
-    }
-  };
-
-  var handleRespondExtend = function(accepted) {
-    if (socketRef.current) {
-      socketRef.current.emit('respond-extend', { accepted: accepted });
-      setExtensionIncoming(false);
-    }
-  };
-
-  var goHome = function() {
-    setScreen('landing');
-    setRole(null);
-    setMessages([]);
-    setEndsAt(null);
-    setRoomId(null);
-    setPartnerTyping(false);
-    setMood([]);
-    setNoListeners(false);
-    setExtensionRequested(false);
-    setExtensionIncoming(false);
-    setExtensionUsed(false);
-    setExtensionConfirmed(false);
-  };
-
-  if (showCrisis) {
-    return <CrisisRedirection onBack={function() { setShowCrisis(false); }} />;
-  }
-  if (showPromise) {
-    return <CommunityPromise onBack={function() { setShowPromise(false); }} />;
-  }
-  if (showPrivacy) {
-    return <PrivacyPolicy onBack={function() { setShowPrivacy(false); }} />;
-  }
-  if (showTerms) {
-    return <TermsOfService onBack={function() { setShowTerms(false); }} />;
-  }
-
-  if (showLetters) {
-    return <LetterWall onBack={function() { setShowLetters(false); }} />;
-  }
-
-  if (showAbout) {
-    return (
-      <AboutPage
-        onBack={function() { setShowAbout(false); }}
-        onShowLetters={function() { setShowAbout(false); setShowLetters(true); }}
-      />
-    );
-  }
-
-  if (showBreathe) {
-    return <BreathePage onBack={function() { setShowBreathe(false); }} />;
-  }
+  if (page === 'privacy') return <PrivacyPolicy onBack={goHome} />;
+  if (page === 'terms') return <TermsOfService onBack={goHome} />;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
-      {screen === 'landing' && (
-        <LandingPage
-          onJoin={joinQueue}
-          onShowPromise={function() { setShowPromise(true); }}
-          onShowCrisis={function() { setShowCrisis(true); }}
-          onShowPrivacy={function() { setShowPrivacy(true); }}
-          onShowTerms={function() { setShowTerms(true); }}
-          onSubscribePush={subscribeToPush}
-          pushEnabled={pushEnabled}
-          onShowLetters={function() { setShowLetters(true); }}
-          onShowAbout={function() { setShowAbout(true); }}
-          onShowBreathe={function() { setShowBreathe(true); }}
-        />
-      )}
-      {screen === 'waiting' && (
-        <WaitingScreen
-          role={role}
-          noListeners={noListeners}
-          onSubscribePush={subscribeToPush}
-          pushEnabled={pushEnabled}
-          onShowLetters={function() { setShowLetters(true); }}
-          onLeave={function() {
-            if (socketRef.current) socketRef.current.emit('leave-queue');
-            goHome();
-          }}
-        />
-      )}
-      {screen === 'chat' && (
-        <ChatInterface
-          messages={messages}
-          onSend={sendMessage}
-          endsAt={endsAt}
-          onStepAway={handleStepAway}
-          partnerTyping={partnerTyping}
-          onTyping={emitTyping}
-          onStopTyping={emitStopTyping}
-          role={role}
-          mood={mood}
-          extensionRequested={extensionRequested}
-          extensionIncoming={extensionIncoming}
-          extensionUsed={extensionUsed}
-          extensionConfirmed={extensionConfirmed}
-          onRequestExtend={handleRequestExtend}
-          onRespondExtend={handleRespondExtend}
-        />
-      )}
-      {screen === 'ended' && (
-        <SessionEnded
-          role={role}
-          onGoHome={goHome}
-          onReport={function() {}}
-          onFeedback={function() {}}
-          onShowLetters={function() { setShowLetters(true); }}
-          myMessageCount={messages.filter(function(m) { return m.sender === 'me'; }).length}
-          totalMessages={messages.length}
-          sessionStartTime={sessionStartTime}
-        />
-      )}
+    <div className="min-h-screen bg-bg text-ink flex flex-col">
+      <main className="flex-1">
+        <LetterWall />
+      </main>
+      <footer className="border-t border-line px-5 py-8">
+        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-ink-faint">
+          <p>
+            Not a crisis service. If you're in danger, call or text{' '}
+            <a href="tel:988" className="text-ink-muted underline underline-offset-2 hover:text-ink">988</a>.
+          </p>
+          <nav className="flex gap-5">
+            <button onClick={function() { setPage('privacy'); }} className="hover:text-ink transition-colors">Privacy</button>
+            <button onClick={function() { setPage('terms'); }} className="hover:text-ink transition-colors">Terms</button>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 }
