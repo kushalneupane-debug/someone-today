@@ -68,7 +68,7 @@ export default function WriteLetter({ type, onBack, onPosted }) {
             <button onClick={function() { setCare(false); }} className="text-ink-muted hover:text-ink transition-colors">Back to my letter</button>
             <button onClick={function() { handleSubmit(true); }} disabled={posting} className="text-accent hover:text-ink transition-colors">{posting ? "Sending..." : "Post my letter too"}</button>
           </div>
-          {error && <p role="alert" className="text-red-700 text-sm mt-4 text-center">{error}</p>}
+          {error && <p role="alert" className="text-danger text-sm mt-4 text-center">{error}</p>}
         </div>
       </div>
     );
@@ -131,11 +131,11 @@ export default function WriteLetter({ type, onBack, onPosted }) {
 
         <div className={"flex justify-between mt-2 mb-6 text-sm min-h-[1.25rem] " + (leaving ? "ritual-recede" : "")}>
           <span className="text-ink-faint">{text.length > 0 && tooShort ? "A few more words" : ""}</span>
-          {remaining <= 300 && <span className={remaining <= 50 ? "text-red-700" : "text-ink-faint"}>{remaining} left</span>}
+          {remaining <= 300 && <span className={remaining <= 50 ? "text-danger" : "text-ink-faint"}>{remaining} left</span>}
         </div>
 
         <div className={leaving ? "ritual-recede" : ""}>
-          {error && <p role="alert" className="text-red-700 text-sm mb-4">{error}</p>}
+          {error && <p role="alert" className="text-danger text-sm mb-4">{error}</p>}
 
           <div className="flex items-center justify-between gap-4">
             <p className="text-ink-faint text-sm">No name. No account.</p>

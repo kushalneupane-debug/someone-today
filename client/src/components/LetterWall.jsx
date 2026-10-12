@@ -32,6 +32,8 @@ export default function LetterWall() {
 
   function fetchLetters(pageNum) {
     fetch("/api/letters?page=" + pageNum).then(function(r) { return r.json(); }).then(function(data) {
+      // An error response has no letters list; treat it as a failed load, not a crash.
+      if (!Array.isArray(data.letters)) throw new Error(data.error || "Bad response");
       setLetters(function(prev) { return pageNum > 0 ? prev.concat(data.letters) : data.letters; });
       setHasMore(data.hasMore); setPage(pageNum); setStatus("ready");
     }).catch(function() { setStatus(function(s) { return s === "ready" ? s : "error"; }); });
@@ -56,15 +58,17 @@ export default function LetterWall() {
   return (
     <div className="px-5">
       <div className="max-w-xl mx-auto">
-        <header className="flex items-baseline justify-between pt-8 pb-10">
-          <p className="font-medium text-ink">Someone Today</p>
-          <button onClick={write} className="text-accent font-medium hover:underline underline-offset-4">Write a letter</button>
+        <header className="pt-10 sm:pt-14">
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="font-display text-[1.75rem] sm:text-[2.125rem] leading-none tracking-[-0.01em] text-ink">Someone Today</h1>
+            <button onClick={write} className="btn-primary flex-shrink-0 py-2.5 px-5 text-sm">Write a letter</button>
+          </div>
+          <p className="mt-4 text-ink-muted leading-relaxed text-pretty">Anonymous letters from strangers. Write one, or answer one.</p>
+          <p className={"mt-2 h-5 text-sm text-ink-faint flex items-center gap-2 transition-opacity duration-700 " + (presence.here >= 2 ? "opacity-100" : "opacity-0")} aria-live="polite">
+            <span className="presence-dot" aria-hidden="true" />
+            {presence.here >= 2 ? presence.here + " people here now" : ""}
+          </p>
         </header>
-
-        <p className="text-ink-muted leading-relaxed">
-          Anonymous letters from strangers. Write one, or answer one.
-          {presence.here >= 2 && <span className="text-ink-faint"> {presence.here} people here now.</span>}
-        </p>
 
         {mine.letters.length > 0 && (
           <section className="mt-10" aria-labelledby="your-letters">

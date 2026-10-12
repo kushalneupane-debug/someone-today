@@ -13,6 +13,7 @@ export default {
           faint:       'rgb(var(--ink-faint) / <alpha-value>)',
         },
         line:          'rgb(var(--line) / <alpha-value>)',
+        danger:        'rgb(var(--danger) / <alpha-value>)',
         accent: {
           DEFAULT:     'rgb(var(--accent) / <alpha-value>)',
           soft:        'rgb(var(--accent-soft) / <alpha-value>)',

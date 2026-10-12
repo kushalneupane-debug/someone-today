@@ -14,9 +14,40 @@
   --line:        233 226 216; /* hairline borders            */
   --accent:      148  78  45; /* clay — sparingly (5.9:1)    */
   --accent-soft: 253 246 240; /* clay tint for backgrounds   */
+  --danger:      185  28  28; /* errors, report             */
+  color-scheme: light;
 
   --shadow-soft: 0 1px 2px rgb(var(--ink) / 0.04), 0 8px 24px rgb(var(--ink) / 0.05);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Dark mode is just a second set of token values. It follows the device
+   unless the person picked Light or Dark (stored on <html data-theme>). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:           24  21  19;
+    --surface:      33  29  26;
+    --ink:         236 230 222;
+    --ink-muted:   184 172 160;
+    --ink-faint:   146 135 124;
+    --line:         58  52  47;
+    --accent:      214 140  98;
+    --accent-soft:  44  33  27;
+    --danger:      248 113 113;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:           24  21  19;
+  --surface:      33  29  26;
+  --ink:         236 230 222;
+  --ink-muted:   184 172 160;
+  --ink-faint:   146 135 124;
+  --line:         58  52  47;
+  --accent:      214 140  98;
+  --accent-soft:  44  33  27;
+  --danger:      248 113 113;
+  color-scheme: dark;
 }
 
 @layer base {

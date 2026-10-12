@@ -221,7 +221,7 @@ export default function LetterDetail({ letterId, onBack, onWrite, presence, onWr
                 className={"paper-text block w-full bg-transparent px-5 pb-4 text-ink placeholder-ink-faint focus:outline-none resize-none " + (warmth ? "pt-1" : "pt-4")} />
             </div>
             <div className={"mt-3 flex items-center justify-between gap-3 " + (flying ? "ritual-recede" : "")}>
-              {error ? <p role="alert" className="text-red-700 text-sm">{error}</p> : <span className="text-ink-faint text-xs">{note.length > 200 ? 280 - note.length + " left" : ""}</span>}
+              {error ? <p role="alert" className="text-danger text-sm">{error}</p> : <span className="text-ink-faint text-xs">{note.length > 200 ? 280 - note.length + " left" : ""}</span>}
               <button type="submit" disabled={sending || (!warmth && note.trim().length < 2)} className="btn-primary py-2.5 px-6 text-sm">{sending ? "Sending..." : "Send"}</button>
             </div>
           </form>
@@ -232,7 +232,7 @@ export default function LetterDetail({ letterId, onBack, onWrite, presence, onWr
             {report === "idle" && <button onClick={function() { setReport("confirm"); }} className="hover:text-ink transition-colors">Report this letter</button>}
             {report === "confirm" && (
               <p>Report this letter? It's hidden once a few people report it.{" "}
-                <button onClick={sendReport} className="text-red-700 underline underline-offset-2 ml-1">Report</button>
+                <button onClick={sendReport} className="text-danger underline underline-offset-2 ml-1">Report</button>
                 <button onClick={function() { setReport("idle"); }} className="underline underline-offset-2 ml-3">Cancel</button>
               </p>
             )}
