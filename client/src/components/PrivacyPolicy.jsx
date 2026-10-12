@@ -25,7 +25,7 @@ export default function PrivacyPolicy({ onBack }) {
 
       <section>
         <h2>"Someone is here"</h2>
-        <p>While the site is open, your browser tells our server every 20 seconds which letter you're reading and whether you're writing a reply. That's how we can show "someone is reading your letter right now." It uses a random code that changes every visit, lives only in memory, and is forgotten within a minute of you leaving.</p>
+        <p>While the site is open, your browser tells our server every 20 seconds which letter you're reading and whether you're writing a reply. That's how we can show "someone is reading your letter right now." It uses a random code kept in your browser that resets every day. The server holds it only in memory and forgets it within a minute of you leaving. Each browser counts once, and search-engine bots are never counted.</p>
       </section>
 
       <section>

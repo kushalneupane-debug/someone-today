@@ -10,8 +10,9 @@
       (function () {
         try {
           var t = localStorage.getItem("someone-today:theme");
-          var dark = t === "dark" || (t !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-          if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+          if (t !== "dark" && t !== "auto") t = "light";
+          document.documentElement.dataset.theme = t;
+          var dark = t === "dark" || (t === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
           if (dark) document.querySelector('meta[name="theme-color"]').setAttribute("content", "#181513");
         } catch (e) {}
       })();

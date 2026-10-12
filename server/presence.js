@@ -14,11 +14,15 @@ function sweep(now) {
 }
 setInterval(function() { sweep(Date.now()); }, 30 * 1000).unref();
 
-function hereNow(now) {
+// Live people, never counting the asker themselves.
+function othersNow(now, exceptSid) {
   var n = 0;
-  sessions.forEach(function(s) { if (now - s.at <= TTL_MS) n++; });
+  sessions.forEach(function(s, sid) { if (sid !== exceptSid && now - s.at <= TTL_MS) n++; });
   return n;
 }
+
+// Crawlers and preview bots run JavaScript too; they are not people.
+var BOT = /bot|crawl|spider|slurp|headless|lighthouse|preview|facebookexternalhit|embedly|whatsapp|telegram|discord|slack/i;
 
 function validId(v) { return typeof v === "string" && /^[a-f0-9]{24}$/i.test(v); }
 
@@ -38,9 +42,10 @@ router.post("/", function(req, res) {
   if (!sid) return res.status(400).json({ error: "Bad session" });
 
   var now = Date.now();
+  if (BOT.test(String(req.headers["user-agent"] || ""))) return res.json({ others: 0, letter: null, mine: {} });
   if (body.leaving) { sessions.delete(sid); return res.json({ ok: true }); }
   if (!sessions.has(sid) && sessions.size >= MAX_SESSIONS) sweep(now);
-  if (!sessions.has(sid) && sessions.size >= MAX_SESSIONS) return res.json({ here: hereNow(now) });
+  if (!sessions.has(sid) && sessions.size >= MAX_SESSIONS) return res.json({ others: othersNow(now, sid), letter: null, mine: {} });
 
   var letterId = validId(body.letterId) ? body.letterId : null;
   sessions.set(sid, { at: now, letterId: letterId, writing: Boolean(body.writing && letterId) });
@@ -53,7 +58,7 @@ router.post("/", function(req, res) {
   });
 
   res.json({
-    here: hereNow(now),
+    others: othersNow(now, sid),
     letter: letterId ? onLetter(letterId, sid) : null,
     mine: mine,
   });

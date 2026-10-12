@@ -14,6 +14,19 @@ function write(list) {
   try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { /* private mode: degrade quietly */ }
 }
 
+// Which heavy letters this browser said "me too" to, so the button stays pressed.
+var ME_TOO_KEY = "someone-today:me-too";
+export function saidMeToo(id) {
+  try { return (JSON.parse(localStorage.getItem(ME_TOO_KEY)) || []).indexOf(id) !== -1; } catch (e) { return false; }
+}
+export function setSaidMeToo(id, on) {
+  try {
+    var list = (JSON.parse(localStorage.getItem(ME_TOO_KEY)) || []).filter(function(x) { return x !== id; });
+    if (on) list.unshift(id);
+    localStorage.setItem(ME_TOO_KEY, JSON.stringify(list.slice(0, 500)));
+  } catch (e) {}
+}
+
 export function rememberLetter(id) {
   var list = read();
   if (list.some(function(l) { return l.id === id; })) return;
@@ -51,7 +64,7 @@ export function useMyLetters() {
         (data.statuses || []).forEach(function(s) { byId[s.id] = s; });
         setLetters(mine.filter(function(l) { return byId[l.id]; }).map(function(l) {
           var s = byId[l.id];
-          return { id: l.id, text: s.text, createdAt: s.createdAt, replyCount: s.replyCount, newReplies: Math.max(0, s.replyCount - l.seen) };
+          return { id: l.id, text: s.text, createdAt: s.createdAt, meToo: s.meToo || 0, replyCount: s.replyCount, newReplies: Math.max(0, s.replyCount - l.seen) };
         }));
       })
       .catch(function() { /* offline: keep showing what we had */ });

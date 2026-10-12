@@ -22,6 +22,8 @@ var letterSchema = new mongoose.Schema({
   type: { type: String, default: "letter" },
   hearts: { type: Number, default: 0 },
   heartIPs: [String],   // hashed network addresses, one per person
+  meToo: { type: Number, default: 0 },
+  meTooKeys: [String],  // hashed network addresses, one per person
   reports: [String],    // hashed network addresses, one per person
   hidden: { type: Boolean, default: false },
   replies: [replySchema],
@@ -51,14 +53,16 @@ setInterval(function() { var cut = Date.now() - 3600 * 1000; cooldowns.forEach(f
 var VISIBLE = { hidden: { $ne: true } };
 
 function preview(l) {
-  return { id: l._id, text: l.text.length > 200 ? l.text.slice(0, 200) + "..." : l.text, tags: l.tags, hearts: l.hearts || 0, replyCount: (l.replies || []).length, createdAt: l.createdAt, type: l.type || "letter" };
+  return { id: l._id, text: l.text.length > 200 ? l.text.slice(0, 200) + "..." : l.text, tags: l.tags, hearts: l.hearts || 0, meToo: l.meToo || 0, replyCount: (l.replies || []).length, createdAt: l.createdAt, type: l.type || "letter" };
 }
 
 router.get("/", function(req, res) {
   var page = parseInt(req.query.page) || 0;
   var limit = 20;
   var filter = Object.assign({}, VISIBLE);
-  if (req.query.tag && req.query.tag !== "all") filter.tags = String(req.query.tag);
+  // Heavy letters and good news live on separate tabs, never mixed.
+  if (req.query.type === "light") filter.type = "light";
+  else if (req.query.type === "letter") filter.type = { $ne: "light" };
   Letter.countDocuments(filter).then(function(total) {
     return Letter.find(filter).sort({ createdAt: -1 }).skip(page * limit).limit(limit).then(function(letters) {
       res.json({ letters: letters.map(preview), total: total, hasMore: (page + 1) * limit < total });
@@ -80,9 +84,9 @@ router.get("/status", function(req, res) {
   if (ids.length === 0) return res.json({ statuses: [] });
   Letter.aggregate([
     { $match: Object.assign({ _id: { $in: ids.map(function(id) { return new mongoose.Types.ObjectId(id); }) } }, VISIBLE) },
-    { $project: { text: { $substrCP: ["$text", 0, 120] }, createdAt: 1, replyCount: { $size: { $ifNull: ["$replies", []] } } } }
+    { $project: { text: { $substrCP: ["$text", 0, 120] }, createdAt: 1, meToo: { $ifNull: ["$meToo", 0] }, replyCount: { $size: { $ifNull: ["$replies", []] } } } }
   ]).then(function(rows) {
-    res.json({ statuses: rows.map(function(r) { return { id: r._id, text: r.text, createdAt: r.createdAt, replyCount: r.replyCount }; }) });
+    res.json({ statuses: rows.map(function(r) { return { id: r._id, text: r.text, createdAt: r.createdAt, meToo: r.meToo, replyCount: r.replyCount }; }) });
   }).catch(function() { res.status(500).json({ error: "Failed to load status" }); });
 });
 
@@ -91,7 +95,7 @@ router.get("/:id", function(req, res) {
   Letter.findOne(Object.assign({ _id: req.params.id }, VISIBLE)).then(function(letter) {
     if (!letter) return res.status(404).json({ error: "Letter not found" });
     res.json({
-      id: letter._id, text: letter.text, tags: letter.tags, type: letter.type || "letter", hearts: letter.hearts || 0, createdAt: letter.createdAt,
+      id: letter._id, text: letter.text, tags: letter.tags, type: letter.type || "letter", hearts: letter.hearts || 0, meToo: letter.meToo || 0, createdAt: letter.createdAt,
       replies: (letter.replies || []).map(function(r) { return { id: r._id, warmth: r.warmth || "", text: r.text || "", createdAt: r.createdAt }; }),
     });
   }).catch(function() { res.status(404).json({ error: "Letter not found" }); });
@@ -151,6 +155,21 @@ router.post("/:id/heart", function(req, res) {
     var update = already ? { $pull: { heartIPs: key }, $inc: { hearts: -1 } } : { $addToSet: { heartIPs: key }, $inc: { hearts: 1 } };
     return Letter.findByIdAndUpdate(letter._id, update, { new: true }).then(function(updated) {
       res.json({ hearts: Math.max(0, updated.hearts), hearted: !already });
+    });
+  }).catch(function() { res.status(404).json({ error: "Letter not found" }); });
+});
+
+// "Me too" on a heavy letter: tells the writer they're not the only one.
+// One per person, pressing again takes it back.
+router.post("/:id/metoo", function(req, res) {
+  var key = visitorKey(req);
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ error: "Letter not found" });
+  Letter.findOne(Object.assign({ _id: req.params.id, type: { $ne: "light" } }, VISIBLE)).then(function(letter) {
+    if (!letter) return res.status(404).json({ error: "Letter not found" });
+    var already = (letter.meTooKeys || []).indexOf(key) !== -1;
+    var update = already ? { $pull: { meTooKeys: key }, $inc: { meToo: -1 } } : { $addToSet: { meTooKeys: key }, $inc: { meToo: 1 } };
+    return Letter.findByIdAndUpdate(letter._id, update, { new: true }).then(function(updated) {
+      res.json({ meToo: Math.max(0, updated.meToo || 0), pressed: !already });
     });
   }).catch(function() { res.status(404).json({ error: "Letter not found" }); });
 });

@@ -5,7 +5,7 @@ import TermsOfService from './components/TermsOfService';
 import { useTheme } from './theme';
 import { CONTACT_EMAIL } from './site';
 
-var THEMES = [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']];
+var THEMES = [['light', 'Light'], ['dark', 'Dark'], ['auto', 'Auto']];
 
 function CrisisBar() {
   return (

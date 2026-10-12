@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSendRitual, pickAffirmation } from "../ritual";
-import { isMine, markSeen, seenCount } from "../myLetters";
+import { isMine, markSeen, seenCount, saidMeToo, setSaidMeToo } from "../myLetters";
 
 var WARMTH = {
   letter: ["You're not alone", "Sending strength", "I've been there too", "This will pass"],
@@ -35,6 +35,7 @@ export default function LetterDetail({ letterId, onBack, onWrite, presence, onWr
   var [pendingReply, setPendingReply] = useState(null);
   var [affirmation, setAffirmation] = useState("");
   var [hearted, setHearted] = useState(false);
+  var [meToo, setMeToo] = useState(function() { return saidMeToo(letterId); });
   var [report, setReport] = useState("idle"); // idle | confirm | done
   var [firstReply] = useState(function() { return !hasRepliedBefore(); });
   var ritual = useSendRitual();
@@ -87,6 +88,18 @@ export default function LetterDetail({ letterId, onBack, onWrite, presence, onWr
     setTimeout(function() { setHearted(false); }, 700);
     fetch("/api/letters/" + letterId + "/heart", { method: "POST" }).then(function(r) { return r.json(); }).then(function(data) {
       if (typeof data.hearts === "number") setLetter(function(prev) { return Object.assign({}, prev, { hearts: data.hearts }); });
+    }).catch(function() {});
+  }
+
+  function toggleMeToo() {
+    var next = !meToo;
+    setMeToo(next); setSaidMeToo(letterId, next);
+    // Show the change right away; the server's count corrects it if needed.
+    setLetter(function(prev) { return Object.assign({}, prev, { meToo: Math.max(0, (prev.meToo || 0) + (next ? 1 : -1)) }); });
+    fetch("/api/letters/" + letterId + "/metoo", { method: "POST" }).then(function(r) { return r.json(); }).then(function(data) {
+      if (typeof data.meToo !== "number") return;
+      setLetter(function(prev) { return Object.assign({}, prev, { meToo: data.meToo }); });
+      setMeToo(data.pressed); setSaidMeToo(letterId, data.pressed);
     }).catch(function() {});
   }
 
@@ -156,6 +169,19 @@ export default function LetterDetail({ letterId, onBack, onWrite, presence, onWr
             <button onClick={handleHeart} aria-label="Send love" className={"transition-colors " + (hearted ? "text-accent" : "hover:text-accent")}>{"♥"} {letter.hearts || 0}</button>
           </p>
         </article>
+
+        {/* "Me too": the plainest way to say you're not the only one. */}
+        {!isLight && (mine ? (
+          letter.meToo > 0 && <p className="mb-6 letter-text text-accent">{letter.meToo === 1 ? "1 person feels this too." : letter.meToo + " people feel this too."}</p>
+        ) : (
+          <div className="mb-6 flex items-center gap-4">
+            <button onClick={toggleMeToo} aria-pressed={meToo}
+              className={"px-4 py-2 rounded-full border text-sm transition-colors " + (meToo ? "bg-accent text-surface border-accent" : "bg-surface text-ink border-line hover:border-accent/50")}>
+              {meToo ? "You feel this too" : "Me too"}
+            </button>
+            {letter.meToo > 0 && <span className="text-sm text-ink-muted">{letter.meToo === 1 ? "1 person feels this too" : letter.meToo + " people feel this too"}</span>}
+          </div>
+        ))}
 
         {/* Live presence — only ever real numbers, never shown when zero. */}
         <div className="min-h-[1.5rem] mb-10 px-1 text-sm" aria-live="polite">

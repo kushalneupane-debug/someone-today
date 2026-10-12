@@ -5,8 +5,15 @@ import { rememberLetter } from "../myLetters";
 var MIN_CHARS = 10;
 var MAX_CHARS = 2000;
 
+// The two kinds of letter are kept apart from the very first step.
+var KINDS = {
+  letter: { name: "Something heavy", pick: "A hard day, a worry, something you're carrying.", intro: "Take your time. There's no rush here.", placeholder: "Dear someone..." },
+  light: { name: "Good news", pick: "A win, a relief, something that went right.", intro: "Big or small, it counts. Tell someone.", placeholder: "Something good happened today..." },
+};
+
 export default function WriteLetter({ type, onBack, onPosted }) {
-  var [letterType, setLetterType] = useState(type === "light" ? "light" : "letter");
+  // null until the writer picks which kind of letter this is.
+  var [letterType, setLetterType] = useState(type === "light" || type === "letter" ? type : null);
   var [text, setText] = useState("");
   var [posting, setPosting] = useState(false);
   var [error, setError] = useState("");
@@ -21,7 +28,6 @@ export default function WriteLetter({ type, onBack, onPosted }) {
   // While someone is writing, everything but the paper steps back.
   var quiet = focused && text.length > 0;
 
-  function chooseType(next) { setLetterType(next); }
 
   function handleSubmit(sawCare) {
     if (tooShort || posting) return;
@@ -90,41 +96,60 @@ export default function WriteLetter({ type, onBack, onPosted }) {
     );
   }
 
+  // Step 1: choose. Heavy and good news never share a page.
+  if (!letterType) {
+    return (
+      <div className="min-h-screen bg-bg px-5 py-8">
+        <div className="max-w-xl mx-auto animate-fade-in">
+          <button onClick={onBack} className="text-ink-muted hover:text-ink transition-colors text-sm flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            Back
+          </button>
+          <h1 className="font-display text-3xl text-ink mt-10">What would you like to write?</h1>
+          <div className="mt-8 space-y-3">
+            {Object.keys(KINDS).map(function(k) {
+              return (
+                <button key={k} onClick={function() { setLetterType(k); }}
+                  className={"w-full text-left rounded-xl border px-6 py-5 transition-colors " + (k === "light" ? "bg-accent-soft border-accent/20 hover:border-accent/50" : "bg-surface border-line hover:border-ink/30")}>
+                  <span className="block text-lg font-medium text-ink">{KINDS[k].name}</span>
+                  <span className="block mt-1 text-ink-muted">{KINDS[k].pick}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   var leaving = ritual.phase === "flying";
   var chrome = "transition-opacity duration-700 " + (leaving ? "ritual-recede" : quiet ? "opacity-40" : "opacity-100");
 
   return (
     <div className={atmosphere}>
       <div className="max-w-xl mx-auto animate-fade-in">
-        <h1 className="sr-only">Write a letter</h1>
+        <h1 className="sr-only">{KINDS[letterType].name}</h1>
 
         <div className={"flex items-center justify-between mb-10 " + chrome}>
           <button onClick={onBack} className="text-ink-muted hover:text-ink transition-colors text-sm flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             Back
           </button>
-          <div className="flex items-center gap-1 text-sm" role="group" aria-label="What kind of letter">
-            {[["letter", "Something heavy"], ["light", "Good news"]].map(function(opt) {
-              var active = letterType === opt[0];
-              return (
-                <button key={opt[0]} onClick={function() { chooseType(opt[0]); }} aria-pressed={active}
-                  className={"px-2 py-1 transition-colors underline-offset-4 " + (active ? "text-ink underline decoration-accent" : "text-ink-muted hover:text-ink")}>
-                  {opt[1]}
-                </button>
-              );
-            })}
-          </div>
+          <p className="text-sm">
+            <span className="text-ink font-medium">{KINDS[letterType].name}</span>
+            <button onClick={function() { setLetterType(null); setError(""); }} className="ml-3 text-ink-muted hover:text-ink underline underline-offset-4">change</button>
+          </p>
         </div>
 
         <p className={"text-ink-muted mb-4 " + chrome}>
-          Take your time. There's no rush here.
+          {KINDS[letterType].intro}
         </p>
 
         <div className={"paper " + (leaving ? "ritual-fly" : "")} onAnimationEnd={leaving ? ritual.onFlyEnd : undefined}>
           <textarea value={text} onChange={function(e) { setText(e.target.value); }}
             onFocus={function() { setFocused(true); }} onBlur={function() { setFocused(false); }}
             readOnly={leaving} aria-label="Your letter"
-            placeholder={isLight ? "Something good happened today..." : "Dear someone..."}
+            placeholder={KINDS[letterType].placeholder}
             maxLength={MAX_CHARS} rows={10}
             className="paper-text block w-full bg-transparent px-5 py-4 text-ink placeholder-ink-faint focus:outline-none resize-none" />
         </div>
