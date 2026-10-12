@@ -10,8 +10,18 @@ var router = express.Router();
 var PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 var PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 var enabled = Boolean(PUBLIC_KEY && PRIVATE_KEY);
-if (enabled) webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:prabesharyal346@gmail.com", PUBLIC_KEY, PRIVATE_KEY);
-else console.log("[PUSH] VAPID keys not set; reply notifications are off.");
+if (enabled) {
+  // A typo in these settings must never take the whole site down:
+  // switch notifications off and say why, instead of crashing on startup.
+  try {
+    webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:prabesharyal346@gmail.com", PUBLIC_KEY, PRIVATE_KEY);
+  } catch (err) {
+    enabled = false;
+    console.log("[PUSH] Bad VAPID settings, reply notifications are off: " + err.message);
+  }
+} else {
+  console.log("[PUSH] VAPID keys not set; reply notifications are off.");
+}
 
 var KEEP_DAYS = 30;            // subscriptions delete themselves after this
 var COOLDOWN_MS = 10 * 60 * 1000; // at most one ping per letter per browser per 10 min

@@ -4,6 +4,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import { useTheme } from './theme';
 import { CONTACT_EMAIL } from './site';
+import Wordmark from './components/Wordmark';
 import { useRoute, navigate, goBack, link } from './router';
 
 var THEMES = [['light', 'Light'], ['dark', 'Dark'], ['auto', 'Auto']];
@@ -22,7 +23,7 @@ function Footer({ theme, setTheme }) {
   return (
     <footer className="border-t border-line mt-20 px-5 pt-12 pb-10">
       <div className="max-w-xl mx-auto">
-        <p className="font-display text-xl text-ink">Someone Today</p>
+        <Wordmark className="block h-8 w-auto text-ink" />
         <p className="mt-1 text-sm text-ink-muted">Anonymous letters from strangers, for strangers.</p>
         <nav className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm" aria-label="Footer">
           <a {...link('/privacy')} className={linkClass}>Privacy</a>

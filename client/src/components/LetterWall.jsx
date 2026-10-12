@@ -3,6 +3,7 @@ import WriteLetter from "./WriteLetter";
 import LetterDetail from "./LetterDetail";
 import { useMyLetters, isMine } from "../myLetters";
 import { usePresence } from "../presence";
+import Wordmark from "./Wordmark";
 import { navigate, goBack, link } from "../router";
 
 function timeAgo(ts) {
@@ -77,7 +78,7 @@ export default function LetterWall({ route }) {
       <div className="max-w-xl mx-auto">
         <header className="pt-10 sm:pt-14">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="font-display text-[1.75rem] sm:text-[2.125rem] leading-none tracking-[-0.01em] text-ink">Someone Today</h1>
+            <h1 className="text-ink"><Wordmark className="block h-11 sm:h-14 w-auto" /></h1>
             <button onClick={write} className="btn-primary flex-shrink-0 py-2.5 px-5 text-sm">Write a letter</button>
           </div>
           <p className="mt-4 text-ink-muted leading-relaxed text-pretty">Anonymous letters from strangers. Write one, or answer one.</p>
